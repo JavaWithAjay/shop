@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+    <top>
+        <MenuBar>
+            <Menu text="File">
+                <MenuItem text="Exit" />
+            </Menu>
+            <Menu text="Admin">
+                <MenuItem text="Admin View" />
+            </Menu>
+        </MenuBar>
+    </top>
+    
+    <center>
+        <VBox spacing="10" style="-fx-padding: 20;">
+            <Label text="Welcome to Grocery Shop Management System" style="-fx-font-size: 24px; -fx-font-weight: bold;"/>
+            <Label text="Database connected successfully!" style="-fx-text-fill: green;"/>
+        </VBox>
+    </center>
+</BorderPane>

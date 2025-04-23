@@ -1,0 +1,16 @@
+# Ignore .class files
+*.class
+
+# Ignore .jar files
+*.jar
+
+# Ignore target directory (for Maven or Gradle builds)
+target/
+
+# Ignore IDE-specific files (for IntelliJ IDEA or Eclipse)
+.idea/
+*.iml
+*.project
+*.bmp
+
+

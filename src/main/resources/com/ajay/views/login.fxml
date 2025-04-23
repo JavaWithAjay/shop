@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<VBox alignment="CENTER" spacing="20" xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.ajay.controllers.LoginController">
+
+    <padding>
+        <Insets top="50" right="50" bottom="50" left="50"/>
+    </padding>
+
+    <Label text="Grocery Shop Management"
+           style="-fx-font-size: 24px; -fx-font-weight: bold;"/>
+
+    <GridPane hgap="10" vgap="10" alignment="CENTER">
+        <columnConstraints>
+            <ColumnConstraints halignment="RIGHT" minWidth="100"/>
+            <ColumnConstraints halignment="LEFT" minWidth="200"/>
+        </columnConstraints>
+
+        <Label text="Username:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <TextField fx:id="usernameField" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+        <Label text="Password:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <PasswordField fx:id="passwordField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+    </GridPane>
+
+    <HBox spacing="20" alignment="CENTER">
+        <Button text="Login" fx:id="loginButton" defaultButton="true"
+                style="-fx-font-weight: bold; -fx-min-width: 100;"/>
+        <Button text="Exit" fx:id="exitButton" style="-fx-min-width: 100;"/>
+    </HBox>
+
+    <Hyperlink text="Forgot Password?" fx:id="forgotPasswordLink"/>
+</VBox>

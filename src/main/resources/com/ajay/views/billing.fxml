@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+      fx:controller="com.ajay.controllers.BillingController" spacing="10" style="-fx-padding: 20;">
+    
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button text="Admin View" onAction="#toggleAdminView" style="-fx-font-weight: bold;"/>
+    </HBox>
+    
+    <HBox spacing="20">
+        <VBox spacing="10" style="-fx-min-width: 300;">
+            <Label text="Add Product to Bill" style="-fx-font-size: 16; -fx-font-weight: bold;"/>
+            
+            <GridPane hgap="10" vgap="10">
+                <columnConstraints>
+                    <ColumnConstraints halignment="RIGHT" minWidth="100"/>
+                    <ColumnConstraints halignment="LEFT" minWidth="200"/>
+                </columnConstraints>
+                
+                <Label text="Product:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                <ComboBox fx:id="productCombo" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                
+                <Label text="Unit:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                <ComboBox fx:id="unitCombo" GridPane.rowIndex="1" GridPane.columnIndex="1" onAction="#handleUnitOther"/>
+                
+                <Label text="Quantity:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                <TextField fx:id="quantityField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                
+                <Label text="Selling Price:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                <TextField fx:id="sellingPriceField" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+                
+                <Label text="Purchase Price:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                <TextField fx:id="purchasePriceField" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+            </GridPane>
+            
+            <Button text="Add to Bill" onAction="#addToBill" style="-fx-font-weight: bold; -fx-min-width: 150;" 
+                    styleClass="primary-button"/>
+        </VBox>
+        
+        <VBox spacing="10" style="-fx-min-width: 500;">
+            <TableView fx:id="billTable" style="-fx-max-height: 300;">
+                <columns>
+                    <TableColumn text="Product" fx:id="productCol" minWidth="150"/>
+                    <TableColumn text="Unit" minWidth="80"/>
+                    <TableColumn text="Qty" fx:id="quantityCol" minWidth="50"/>
+                    <TableColumn text="Price" fx:id="priceCol" minWidth="80"/>
+                    <TableColumn text="Total" fx:id="totalCol" minWidth="100"/>
+                </columns>
+            </TableView>
+            
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Button text="Remove Selected" onAction="#removeSelected" style="-fx-background-color: #e74c3c; -fx-text-fill: white;"/>
+            </HBox>
+            
+            <HBox spacing="20" alignment="CENTER_RIGHT">
+                <Label text="Total:" style="-fx-font-weight: bold;"/>
+                <Label fx:id="totalLabel" text="₹0.00" style="-fx-font-weight: bold; -fx-font-size: 16;"/>
+            </HBox>
+            
+            <HBox spacing="20" alignment="CENTER_RIGHT">
+                <Label text="Profit:" style="-fx-font-weight: bold;"/>
+                <Label fx:id="profitLabel" text="₹0.00 (0.00%)" style="-fx-font-weight: bold; -fx-font-size: 16;"/>
+            </HBox>
+            
+            <HBox fx:id="adminButtonsBox" spacing="10" alignment="CENTER">
+                <Button text="Generate Customer Bill" onAction="#generateCustomerBill" style="-fx-background-color: #3498db; -fx-text-fill: white;"/>
+                <Button text="Generate Admin Bill" onAction="#generateAdminBill" style="-fx-background-color: #2ecc71; -fx-text-fill: white;"/>
+                <Button text="Save to Database" onAction="#saveBillToDB" style="-fx-background-color: #9b59b6; -fx-text-fill: white;"/>
+            </HBox>
+        </VBox>
+    </HBox>
+</VBox>
