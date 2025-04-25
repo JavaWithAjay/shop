@@ -1,229 +1,473 @@
 package com.ajay.controllers;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 import com.ajay.models.BillItem;
 import com.ajay.DatabaseConnection;
+import java.io.IOException;
+import java.net.URL;
 import java.sql.*;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import javafx.scene.layout.HBox;
+import java.util.Optional;
+import java.util.ResourceBundle;
 
-public class BillingController {
-    
+public class BillingController implements Initializable {
+
     @FXML private TableView<BillItem> billTable;
-    @FXML private TableColumn<BillItem, String> productCol;
-    @FXML private TableColumn<BillItem, Double> quantityCol;
-    @FXML private TableColumn<BillItem, Double> priceCol;
-    @FXML private TableColumn<BillItem, Double> totalCol;
+    @FXML private TableColumn<BillItem, String> productCol, unitCol, priceLevelCol;
+    @FXML private TableColumn<BillItem, Double> quantityCol, sellingPriceCol, totalCol, purchasePriceCol, profitCol;
     
-    @FXML private ComboBox<String> productCombo;
-    @FXML private ComboBox<String> unitCombo;
-    @FXML private TextField quantityField;
-    @FXML private TextField sellingPriceField;
-    @FXML private TextField purchasePriceField;
+    @FXML private TextField productField, quantityField, purchasePriceField, sellingPriceField;
+    @FXML private ComboBox<String> customerTypeCombo, unitCombo;
+    @FXML private Label purchasePriceLabel, sellingPriceLabel, totalLabel, profitLabel, purchaseTotalLabel;
     
-    @FXML private Label totalLabel;
-    @FXML private Label profitLabel;
-    @FXML private HBox adminButtonsBox;
-    
+    @FXML private VBox adminPanel;
+    @FXML private HBox adminButtons;
+    @FXML private Button saveButton, retrieveButton, customerBillButton, adminBillButton;
+
     private ObservableList<BillItem> billItems = FXCollections.observableArrayList();
-    private double totalSellingPrice = 0;
-    private double totalPurchasePrice = 0;
-    
-    @FXML
-    public void initialize() {
-        // Initialize table columns
+    private double totalAmount = 0;
+    private double totalProfit = 0;
+    private double totalPurchase = 0;
+
+
+
+
+        @Override
+public void initialize(URL location, ResourceBundle resources) {
+    Platform.runLater(() -> {
+        setupTableColumns();
+        setupCustomerTypes();
+        setupUnits();
+        hideAdminFeatures();
+        updatePriceFieldLabels();
+        
+        // Set stage to be maximized
+        Stage stage = (Stage) productField.getScene().getWindow();
+        stage.setMaximized(true);
+        
+    });
+}
+
+    private void setupTableColumns() {
         productCol.setCellValueFactory(new PropertyValueFactory<>("productName"));
         quantityCol.setCellValueFactory(new PropertyValueFactory<>("quantity"));
-        priceCol.setCellValueFactory(new PropertyValueFactory<>("sellingPrice"));
+        unitCol.setCellValueFactory(new PropertyValueFactory<>("unit"));
+        sellingPriceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
         totalCol.setCellValueFactory(new PropertyValueFactory<>("total"));
+        purchasePriceCol.setCellValueFactory(new PropertyValueFactory<>("purchasePrice"));
+        profitCol.setCellValueFactory(new PropertyValueFactory<>("profit"));
+        priceLevelCol.setCellValueFactory(new PropertyValueFactory<>("priceLevel"));
         
         billTable.setItems(billItems);
-        
-        // Load products and units
-        loadProducts();
-        loadUnits();
-        
-        // Initially hide admin buttons
-        adminButtonsBox.setVisible(false);
     }
-    
-    private void loadProducts() {
+
+    private void setupCustomerTypes() {
+        customerTypeCombo.getItems().addAll("DISTRIBUTOR", "WHOLESALER", "RETAILER", "CUSTOMER");
+        customerTypeCombo.setValue("RETAILER");
+        
+        customerTypeCombo.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            updatePriceFieldLabels();
+            updateProductPriceSilently();
+        });
+    }
+
+    private void setupUnits() {
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT name FROM products")) {
+             ResultSet rs = stmt.executeQuery("SELECT name FROM units ORDER BY name")) {
             
-            while (rs.next()) {
-                productCombo.getItems().add(rs.getString("name"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-    
-    private void loadUnits() {
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT name FROM units")) {
-            
+            unitCombo.getItems().clear();
             while (rs.next()) {
                 unitCombo.getItems().add(rs.getString("name"));
             }
             unitCombo.getItems().add("Other");
+            
+            unitCombo.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+                if ("Other".equals(newVal)) {
+                    handleNewUnitAddition();
+                }
+            });
         } catch (SQLException e) {
-            e.printStackTrace();
+            showAlert("Error", "Failed to load units: " + e.getMessage());
         }
     }
+
+    private void handleNewUnitAddition() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Add New Unit");
+        dialog.setHeaderText("Enter the name of the new unit:");
+        dialog.setContentText("Unit name:");
     
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(unitName -> {
+            try (Connection conn = DatabaseConnection.getInstance().getConnection();
+                 PreparedStatement ps = conn.prepareStatement("INSERT INTO units (name) VALUES (?)")) {
+                ps.setString(1, unitName);
+                ps.executeUpdate();
+    
+                unitCombo.getItems().add(unitName);
+                unitCombo.getSelectionModel().select(unitName);
+            } catch (SQLException e) {
+                showAlert("Error", "Failed to add new unit: " + e.getMessage());
+            }
+        });
+    }
+      
+
+    private void saveNewUnit(String unitName) throws SQLException {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement("INSERT INTO units (name) VALUES (?)")) {
+            stmt.setString(1, unitName);
+            stmt.executeUpdate();
+        }
+    }
+
+    private void updatePriceFieldLabels() {
+        String customerType = customerTypeCombo.getValue();
+        switch (customerType) {
+            case "DISTRIBUTOR":
+                purchasePriceLabel.setText("Distributor Purchase Price:");
+                sellingPriceLabel.setText("Distributor Selling Price:");
+                break;
+            case "WHOLESALER":
+                purchasePriceLabel.setText("Wholesaler Purchase Price:");
+                sellingPriceLabel.setText("Wholesaler Selling Price:");
+                break;
+            case "RETAILER":
+                purchasePriceLabel.setText("Retailer Purchase Price:");
+                sellingPriceLabel.setText("Retailer Selling Price:");
+                break;
+            default: // CUSTOMER
+                purchasePriceLabel.setText("Customer Purchase Price:");
+                sellingPriceLabel.setText("Customer Selling Price:");
+                break;
+        }
+    }
+
+    private void hideAdminFeatures() {
+        adminPanel.setVisible(false);
+        adminButtons.setVisible(false);
+        purchasePriceCol.setVisible(false);
+        profitCol.setVisible(false);
+        priceLevelCol.setVisible(false);
+    }
+
+    @FXML
+    private void toggleAdminView() {
+        boolean showAdmin = !adminPanel.isVisible();
+        adminPanel.setVisible(showAdmin);
+        adminButtons.setVisible(showAdmin);
+        purchasePriceCol.setVisible(showAdmin);
+        profitCol.setVisible(showAdmin);
+        priceLevelCol.setVisible(showAdmin);
+    }
+
+    @FXML
+    private void searchProduct() {
+        String productName = productField.getText().trim();
+        if (productName.isEmpty()) {
+            clearPriceFields();
+            return;
+        }
+
+        try {
+            ProductDetails details = getProductDetails(productName);
+            if (details != null) {
+                purchasePriceField.setText(String.format("%.2f", details.purchasePrice));
+                sellingPriceField.setText(String.format("%.2f", details.sellingPrice));
+                unitCombo.setValue(details.unit);
+            } else {
+                clearPriceFields();
+            }
+        } catch (SQLException e) {
+            clearPriceFields();
+        }
+    }
+
+    private ProductDetails getProductDetails(String productName) throws SQLException {
+        String customerType = customerTypeCombo.getValue();
+        String priceColumn = customerType.toLowerCase() + "_price";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                 "SELECT p." + priceColumn + ", p.purchase_price, u.name as unit_name " +
+                 "FROM products p JOIN units u ON p.unit_id = u.id WHERE p.name = ?")) {
+
+            stmt.setString(1, productName);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return new ProductDetails(
+                    rs.getDouble(priceColumn),
+                    rs.getDouble("purchase_price"),
+                    rs.getString("unit_name")
+                );
+            }
+        }
+        return null;
+    }
+
+    private void updateProductPriceSilently() {
+        String productName = productField.getText().trim();
+        if (productName.isEmpty()) return;
+
+        try {
+            ProductDetails details = getProductDetails(productName);
+            if (details != null) {
+                purchasePriceField.setText(String.format("%.2f", details.purchasePrice));
+                sellingPriceField.setText(String.format("%.2f", details.sellingPrice));
+                unitCombo.setValue(details.unit);
+            }
+        } catch (SQLException e) {
+            // Silently ignore
+        }
+    }
+
     @FXML
     private void addToBill() {
         try {
-            String product = productCombo.getValue();
-            String unit = unitCombo.getValue();
-            double quantity = Double.parseDouble(quantityField.getText());
-            double sellingPrice = Double.parseDouble(sellingPriceField.getText());
-            double purchasePrice = Double.parseDouble(purchasePriceField.getText());
-            
-            BillItem item = new BillItem(product, unit, quantity, sellingPrice, purchasePrice);
-            billItems.add(item);
-            
-            // Update totals
-            totalSellingPrice += item.getTotal();
-            totalPurchasePrice += (purchasePrice * quantity);
-            
-            updateTotals();
-            
-            // Clear fields
-            quantityField.clear();
-            sellingPriceField.clear();
-            purchasePriceField.clear();
-            
+            BillItem item = createBillItemFromInput();
+            if (item != null) {
+                billItems.add(item);
+                updateTotals();
+                clearProductFields();
+            }
         } catch (NumberFormatException e) {
-            showAlert("Input Error", "Please enter valid numbers for quantity and prices");
+            showAlert("Error", "Please enter valid quantity and prices.");
         }
     }
-    
-    private void updateTotals() {
-        totalLabel.setText(String.format("₹%.2f", totalSellingPrice));
-        double profit = totalSellingPrice - totalPurchasePrice;
-        profitLabel.setText(String.format("₹%.2f (%.2f%%)", 
-            profit, (profit/totalPurchasePrice)*100));
+
+    private BillItem createBillItemFromInput() {
+        String productName = productField.getText().trim();
+        String customerType = customerTypeCombo.getValue();
+        String unit = unitCombo.getValue();
+        
+        if (productName.isEmpty() || unit == null || unit.isEmpty()) {
+            showAlert("Error", "Please enter product name and select unit.");
+            return null;
+        }
+
+        try {
+            double quantity = Double.parseDouble(quantityField.getText());
+            double purchasePrice = Double.parseDouble(purchasePriceField.getText());
+            double sellingPrice = Double.parseDouble(sellingPriceField.getText());
+            
+            if (quantity <= 0 || purchasePrice < 0 || sellingPrice < 0) {
+                showAlert("Error", "Values must be positive numbers.");
+                return null;
+            }
+            
+            double profit = (sellingPrice - purchasePrice) * quantity;
+            
+            return new BillItem(
+                productName, 
+                unit, 
+                quantity, 
+                sellingPrice, 
+                purchasePrice, 
+                customerType, 
+                profit
+            );
+        } catch (NumberFormatException e) {
+            throw e;
+        }
     }
-    
+
+    private void updateTotals() {
+        totalAmount = billItems.stream().mapToDouble(BillItem::getTotal).sum();
+        totalPurchase = billItems.stream().mapToDouble(item -> item.getPurchasePrice() * item.getQuantity()).sum();
+        totalProfit = totalAmount - totalPurchase;
+
+        totalLabel.setText(String.format("₹%.2f", totalAmount));
+        purchaseTotalLabel.setText(String.format("₹%.2f", totalPurchase));
+        profitLabel.setText(String.format("₹%.2f", totalProfit));
+    }
+
     @FXML
     private void removeSelected() {
         BillItem selected = billTable.getSelectionModel().getSelectedItem();
         if (selected != null) {
-            totalSellingPrice -= selected.getTotal();
-            totalPurchasePrice -= (selected.getPurchasePrice() * selected.getQuantity());
-            
             billItems.remove(selected);
             updateTotals();
+        } else {
+            showAlert("Warning", "Please select an item to remove.");
         }
     }
-    
+
     @FXML
-    private void toggleAdminView() {
-        adminButtonsBox.setVisible(!adminButtonsBox.isVisible());
+    private void goBack() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/ajay/views/dashboard.fxml"));
+            Parent root = loader.load();
+            Stage stage = (Stage) productField.getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.setMaximized(true);
+        } catch (IOException e) {
+            showAlert("Error", "Failed to go back: " + e.getMessage());
+        }
     }
-    
+
     @FXML
-    private void generateCustomerBill() {
-        // Generate PDF with only selling prices
-        String billContent = generateBillContent(false);
-        // PDF generation code would go here
-        showAlert("Bill Generated", "Customer bill Pdf create in the next version");
+    private void saveData() {
+        if (billItems.isEmpty()) {
+            showAlert("Error", "No items in the bill to save.");
+            return;
+        }
+
+        try {
+            saveBill();
+            showAlert("Success", "Bill saved successfully.");
+            billItems.clear();
+            updateTotals();
+        } catch (SQLException e) {
+            showAlert("Error", "Failed to save bill: " + e.getMessage());
+        }
     }
-    
-    @FXML
-    private void generateAdminBill() {
-        // Generate PDF with all details including profit
-        String billContent = generateBillContent(true);
-        // PDF generation code would go here
-        showAlert("Bill Generated", "Admin bill PDF create in the next version");
-    }
-    
-    @FXML
-    private void saveBillToDB() {
+
+    private void saveBill() throws SQLException {
         try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
-            // Start transaction
             conn.setAutoCommit(false);
             
-            // Insert transaction
-            String transSql = "INSERT INTO transactions (transaction_type, total_amount, profit) VALUES (?, ?, ?)";
-            PreparedStatement transStmt = conn.prepareStatement(transSql, Statement.RETURN_GENERATED_KEYS);
-            transStmt.setString(1, "SALE");
-            transStmt.setDouble(2, totalSellingPrice);
-            transStmt.setDouble(3, totalSellingPrice - totalPurchasePrice);
-            transStmt.executeUpdate();
+            // Save bill header
+            int billId = saveBillHeader(conn);
             
-            // Get generated transaction ID
-            ResultSet rs = transStmt.getGeneratedKeys();
-            int transId = rs.next() ? rs.getInt(1) : 0;
+            // Save bill items
+            saveBillItems(conn, billId);
             
-            // Insert bill items
-            String itemSql = "INSERT INTO transaction_items (transaction_id, product_name, quantity, " +
-                           "purchase_price, selling_price) VALUES (?, ?, ?, ?, ?)";
-            PreparedStatement itemStmt = conn.prepareStatement(itemSql);
+            conn.commit();
+        }
+    }
+
+    private int saveBillHeader(Connection conn) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(
+                "INSERT INTO bills (total, profit, purchase_total) VALUES (?, ?, ?)", 
+                Statement.RETURN_GENERATED_KEYS)) {
+            
+            stmt.setDouble(1, totalAmount);
+            stmt.setDouble(2, totalProfit);
+            stmt.setDouble(3, totalPurchase);
+            stmt.executeUpdate();
+            
+            ResultSet rs = stmt.getGeneratedKeys();
+            return rs.next() ? rs.getInt(1) : -1;
+        }
+    }
+
+    private void saveBillItems(Connection conn, int billId) throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(
+                "INSERT INTO bill_items (bill_id, product_name, quantity, unit, selling_price, purchase_price, customer_type) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)")) {
             
             for (BillItem item : billItems) {
-                itemStmt.setInt(1, transId);
-                itemStmt.setString(2, item.getProductName());
-                itemStmt.setDouble(3, item.getQuantity());
-                itemStmt.setDouble(4, item.getPurchasePrice());
-                itemStmt.setDouble(5, item.getSellingPrice());
-                itemStmt.addBatch();
+                stmt.setInt(1, billId);
+                stmt.setString(2, item.getProductName());
+                stmt.setDouble(3, item.getQuantity());
+                stmt.setString(4, item.getUnit());
+                stmt.setDouble(5, item.getPrice());
+                stmt.setDouble(6, item.getPurchasePrice());
+                stmt.setString(7, item.getPriceLevel());
+                stmt.addBatch();
             }
-            
-            itemStmt.executeBatch();
-            conn.commit();
-            
-            showAlert("Success", "Bill saved to database successfully");
-            resetBill();
-            
+            stmt.executeBatch();
+        }
+    }
+
+    @FXML
+    private void retrieveData() {
+        try {
+            retrieveLastBill();
         } catch (SQLException e) {
-            e.printStackTrace();
-            showAlert("Database Error", "Failed to save bill to database");
+            showAlert("Error", "Failed to retrieve bill: " + e.getMessage());
         }
     }
-    
-    private String generateBillContent(boolean isAdmin) {
-        StringBuilder sb = new StringBuilder();
-        String header = "Grocery Shop Bill\n" +
-                       "Date: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")) + "\n" +
-                       "----------------------------------------\n";
-        
-        sb.append(header);
-        
-        for (BillItem item : billItems) {
-            sb.append(String.format("%s (%s) - %.2f x %.2f = ₹%.2f\n",
-                item.getProductName(), item.getUnit(),
-                item.getQuantity(), item.getSellingPrice(), item.getTotal()));
+
+    private void retrieveLastBill() throws SQLException {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM bills ORDER BY id DESC LIMIT 1")) {
+            
+            if (rs.next()) {
+                int billId = rs.getInt("id");
+                loadBillItems(billId);
+                
+                totalAmount = rs.getDouble("total");
+                totalProfit = rs.getDouble("profit");
+                totalPurchase = rs.getDouble("purchase_total");
+                
+                updateTotals();
+                showAlert("Success", "Last bill retrieved successfully.");
+            } else {
+                showAlert("Information", "No saved bills found.");
+            }
         }
-        
-        sb.append("----------------------------------------\n");
-        sb.append(String.format("Total: ₹%.2f\n", totalSellingPrice));
-        
-        if (isAdmin) {
-            sb.append("\nADMIN DETAILS:\n");
-            sb.append(String.format("Total Purchase Cost: ₹%.2f\n", totalPurchasePrice));
-            sb.append(String.format("Total Profit: ₹%.2f\n", totalSellingPrice - totalPurchasePrice));
+    }
+
+    private void loadBillItems(int billId) throws SQLException {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                 "SELECT * FROM bill_items WHERE bill_id = ?")) {
+            
+            stmt.setInt(1, billId);
+            ResultSet rs = stmt.executeQuery();
+            
+            billItems.clear();
+            while (rs.next()) {
+                billItems.add(new BillItem(
+                    rs.getString("product_name"),
+                    rs.getString("unit"),
+                    rs.getDouble("quantity"),
+                    rs.getDouble("selling_price"),
+                    rs.getDouble("purchase_price"),
+                    rs.getString("customer_type"),
+                    rs.getDouble("selling_price") * rs.getDouble("quantity") - 
+                    rs.getDouble("purchase_price") * rs.getDouble("quantity")
+                ));
+            }
         }
-        
-        return sb.toString();
     }
-    
-    private void resetBill() {
-        billItems.clear();
-        totalSellingPrice = 0;
-        totalPurchasePrice = 0;
-        updateTotals();
+
+    @FXML
+    private void generateCustomerBill() {
+        if (billItems.isEmpty()) {
+            showAlert("Error", "No items in the bill to generate.");
+            return;
+        }
+        showAlert("Success", "Customer bill will be generated in next version.");
     }
-    
+
+    @FXML
+    private void generateAdminBill() {
+        if (billItems.isEmpty()) {
+            showAlert("Error", "No items in the bill to generate.");
+            return;
+        }
+        showAlert("Success", "Admin bill will be generated in next version.");
+    }
+
+    private void clearPriceFields() {
+        purchasePriceField.clear();
+        sellingPriceField.clear();
+    }
+
+    private void clearProductFields() {
+        productField.clear();
+        quantityField.clear();
+        clearPriceFields();
+        unitCombo.setValue(null);
+        productField.requestFocus();
+    }
+
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);
@@ -231,20 +475,16 @@ public class BillingController {
         alert.setContentText(message);
         alert.showAndWait();
     }
-    
-    @FXML
-    private void handleUnitOther() {
-        if (unitCombo.getValue().equals("Other")) {
-            TextInputDialog dialog = new TextInputDialog();
-            dialog.setTitle("Custom Unit");
-            dialog.setHeaderText("Enter custom unit name");
-            dialog.setContentText("Unit:");
-            
-            dialog.showAndWait().ifPresent(unit -> {
-                // Save to database if needed
-                unitCombo.getItems().add(unit);
-                unitCombo.setValue(unit);
-            });
+
+    private static class ProductDetails {
+        final double sellingPrice;
+        final double purchasePrice;
+        final String unit;
+
+        ProductDetails(double sellingPrice, double purchasePrice, String unit) {
+            this.sellingPrice = sellingPrice;
+            this.purchasePrice = purchasePrice;
+            this.unit = unit;
         }
     }
 }

@@ -1,38 +1,84 @@
 package com.ajay.models;
 
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleStringProperty;
-
 public class BillItem {
-    private final SimpleStringProperty productName;
-    private final SimpleStringProperty unit;
-    private final SimpleDoubleProperty quantity;
-    private final SimpleDoubleProperty sellingPrice;
-    private final SimpleDoubleProperty purchasePrice;
-    private final SimpleDoubleProperty total;
-    
-    public BillItem(String productName, String unit, double quantity, 
-                   double sellingPrice, double purchasePrice) {
-        this.productName = new SimpleStringProperty(productName);
-        this.unit = new SimpleStringProperty(unit);
-        this.quantity = new SimpleDoubleProperty(quantity);
-        this.sellingPrice = new SimpleDoubleProperty(sellingPrice);
-        this.purchasePrice = new SimpleDoubleProperty(purchasePrice);
-        this.total = new SimpleDoubleProperty(quantity * sellingPrice);
+    private String productName;
+    private String unit;
+    private double quantity;
+    private double price; // selling price
+    private double purchasePrice;
+    private String priceLevel; // Customer type like RETAILER, WHOLESALER, etc.
+    private double profit;
+
+    public BillItem(String productName, String unit, double quantity, double price,
+                    double purchasePrice, String priceLevel, double profit) {
+        this.productName = productName;
+        this.unit = unit;
+        this.quantity = quantity;
+        this.price = price;
+        this.purchasePrice = purchasePrice;
+        this.priceLevel = priceLevel;
+        this.profit = profit;
     }
-    
-    // Getters for properties
-    public SimpleStringProperty productNameProperty() { return productName; }
-    public SimpleStringProperty unitProperty() { return unit; }
-    public SimpleDoubleProperty quantityProperty() { return quantity; }
-    public SimpleDoubleProperty sellingPriceProperty() { return sellingPrice; }
-    public SimpleDoubleProperty totalProperty() { return total; }
-    
-    // Regular getters
-    public String getProductName() { return productName.get(); }
-    public String getUnit() { return unit.get(); }
-    public double getQuantity() { return quantity.get(); }
-    public double getSellingPrice() { return sellingPrice.get(); }
-    public double getPurchasePrice() { return purchasePrice.get(); }
-    public double getTotal() { return total.get(); }
+
+    // Getters
+    public String getProductName() {
+        return productName;
+    }
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public double getQuantity() {
+        return quantity;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public double getPurchasePrice() {
+        return purchasePrice;
+    }
+
+    public String getPriceLevel() {
+        return priceLevel;
+    }
+
+    public double getProfit() {
+        return profit;
+    }
+
+    public double getTotal() {
+        return quantity * price;
+    }
+
+    // Optional setters if needed
+    public void setQuantity(double quantity) {
+        this.quantity = quantity;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public void setPurchasePrice(double purchasePrice) {
+        this.purchasePrice = purchasePrice;
+    }
+
+    public void setProfit(double profit) {
+        this.profit = profit;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
+    }
+
+    public void setPriceLevel(String priceLevel) {
+        this.priceLevel = priceLevel;
+    }
 }
