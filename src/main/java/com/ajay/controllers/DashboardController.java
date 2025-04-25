@@ -133,6 +133,18 @@ private void showBilling() {
     }
 }
 
+@FXML
+private void showPrices() {
+    try {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/ajay/views/price.fxml"));
+        Node priceView = loader.load();
+        contentPane.getChildren().setAll(priceView);
+    } catch (IOException e) {
+        e.printStackTrace();
+        showAlert("Error", "Failed to load price management screen");
+    }
+}
+
     @FXML
     private void showInventory() {
         showAlert("Info", "Inventory view will be implemented next");

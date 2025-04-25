@@ -23,6 +23,7 @@
             
             <Button text="Dashboard" style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-min-width: 180; -fx-alignment: CENTER_LEFT;"/>
             <Button text="Products" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-min-width: 180; -fx-alignment: CENTER_LEFT;" onAction="#showProducts"/>
+            <Button text="Prices" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-min-width: 180; -fx-alignment: CENTER_LEFT;" onAction="#showPrices"/>
             <Button text="Customers" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-min-width: 180; -fx-alignment: CENTER_LEFT;" onAction="#showCustomers"/>
             <Button text="Billing" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-min-width: 180; -fx-alignment: CENTER_LEFT;" onAction="#showBilling"/>
             <Button text="Inventory" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-min-width: 180; -fx-alignment: CENTER_LEFT;" onAction="#showInventory"/>
