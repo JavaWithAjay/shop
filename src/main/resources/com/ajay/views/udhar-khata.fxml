@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.geometry.Pos?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml/1"
+      xmlns="http://javafx.com/javafx/21"
+      fx:controller="com.ajay.controllers.UdharKhataController"
+      spacing="15" alignment="TOP_LEFT" style="-fx-padding: 15;">
+
+    <Label text="Udhar Khata Management System" style="-fx-font-size: 24; -fx-font-weight: bold;"/>
+
+    <!-- Search Bar -->
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <TextField fx:id="searchField" promptText="Search by customer or product..." style="-fx-min-width: 300;"/>
+        <Button fx:id="searchButton" text="Search 🔍" onAction="#handleSearch" style="-fx-background-color: #3498db; -fx-text-fill: white;"/>
+        <Button fx:id="refreshButton" text="Refresh ♻️" onAction="#handleRefresh" style="-fx-background-color: #3498db; -fx-text-fill: white;"/>
+    </HBox>
+
+    <!-- Customer Form -->
+    <GridPane hgap="10" vgap="10">
+        <columnConstraints>
+            <ColumnConstraints halignment="RIGHT" minWidth="100"/>
+            <ColumnConstraints halignment="LEFT" minWidth="200"/>
+        </columnConstraints>
+
+        <Label text="Customer Name:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <TextField fx:id="customerNameField" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+        <Label text="Phone:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <TextField fx:id="phoneField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+        <Label text="Product Name:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <TextField fx:id="productField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+        <Label text="Amount:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <TextField fx:id="amountField" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+        <Label text="Paid Amount:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+        <TextField fx:id="paidField" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+        <Label text="Date:" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+        <TextField fx:id="dateField" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+
+        <Label text="Description:" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+        <TextArea fx:id="descArea" GridPane.rowIndex="6" GridPane.columnIndex="1" style="-fx-min-height: 60;"/>
+
+        <Text fx:id="balanceText" GridPane.rowIndex="7" GridPane.columnIndex="1" style="-fx-font-weight: bold;"/>
+    </GridPane>
+
+    <!-- Buttons -->
+    <HBox spacing="20" alignment="CENTER">
+        <Button fx:id="addButton" text="Add ➕" onAction="#handleAddEntry"
+                style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-min-width: 100;"/>
+        <Button fx:id="updateButton" text="Update ✏️" onAction="#handleUpdateEntry"
+                style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-min-width: 100;"/>
+        <Button fx:id="deleteButton" text="Delete 🗑️" onAction="#handleDeleteEntry"
+                style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-min-width: 100;"/>
+        <Button fx:id="generatePdfButton" text="Generate PDF 📄" onAction="#handleGeneratePdf"
+                style="-fx-background-color: #9b59b6; -fx-text-fill: white; -fx-min-width: 120;"/>
+    </HBox>
+
+    <!-- Summary -->
+    <HBox spacing="20" alignment="CENTER">
+        <Text fx:id="totalUdharText" style="-fx-font-weight: bold;"/>
+        <Text fx:id="totalPaidText" style="-fx-font-weight: bold;"/>
+    </HBox>
+
+    <!-- Table -->
+    <TableView fx:id="khataTable" style="-fx-max-height: 300;">
+        <columns>
+            <TableColumn fx:id="idCol" text="ID" minWidth="50"/>
+            <TableColumn fx:id="customerNameCol" text="Customer" minWidth="150"/>
+            <TableColumn fx:id="phoneCol" text="Phone" minWidth="100"/>
+            <TableColumn fx:id="productCol" text="Product" minWidth="150"/>
+            <TableColumn fx:id="amountCol" text="Amount" minWidth="80"/>
+            <TableColumn fx:id="paidCol" text="Paid" minWidth="80"/>
+            <TableColumn fx:id="statusCol" text="Status" minWidth="80"/>
+            <TableColumn fx:id="dateCol" text="Date" minWidth="100"/>
+            <TableColumn fx:id="descCol" text="Description" minWidth="200"/>
+        </columns>
+    </TableView>
+
+</VBox>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.geometry.Pos?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml/1"
+      xmlns="http://javafx.com/javafx/21"
+      fx:controller="com.ajay.controllers.InventoryAlertController"
+      spacing="15" alignment="TOP_LEFT" style="-fx-padding: 15;">
+
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label text="Inventory Stock Alert System" style="-fx-font-size: 24; -fx-font-weight: bold;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button fx:id="refreshButton" text="Refresh ♻️" onAction="#handleRefresh" style="-fx-background-color: #3498db; -fx-text-fill: white;"/>
+        <Button fx:id="checkStockButton" text="Check Stock Alerts" onAction="#handleCheckStock" style="-fx-background-color: #e74c3c; -fx-text-fill: white;"/>
+    </HBox>
+
+    <!-- Category -->
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label text="Category:"/>
+        <ComboBox fx:id="categoryCombo" style="-fx-min-width: 120;"/>
+        <Button text="➕ Other" onAction="#handleNewCategory" style="-fx-background-color: transparent;"/>
+    </HBox>
+
+    <!-- Search Bar -->
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <TextField fx:id="searchField" promptText="Search inventory..." style="-fx-min-width: 300;"/>
+        <Button text="Search 🔍" onAction="#handleSearch" style="-fx-background-color: #3498db; -fx-text-fill: white;"/>
+    </HBox>
+
+    <!-- Inventory Form -->
+    <GridPane hgap="10" vgap="10">
+        <columnConstraints>
+            <ColumnConstraints halignment="RIGHT" minWidth="100"/>
+            <ColumnConstraints halignment="LEFT" minWidth="200"/>
+        </columnConstraints>
+
+        <Label text="Product Name:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <TextField fx:id="productNameField" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+        <Label text="Unit:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <HBox spacing="5" alignment="CENTER_LEFT" GridPane.rowIndex="1" GridPane.columnIndex="1">
+            <ComboBox fx:id="unitCombo" style="-fx-min-width: 100;"/>
+            <Button text="➕ Other" onAction="#handleNewUnit" style="-fx-background-color: transparent;"/>
+        </HBox>
+
+        <Label text="Current Stock:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <TextField fx:id="currentStockField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+        <Label text="Alert Threshold:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <TextField fx:id="alertThresholdField" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+        <Label text="Status:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+        <Text fx:id="statusText" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+    </GridPane>
+
+    <!-- Buttons -->
+    <HBox spacing="20" alignment="CENTER">
+        <Button fx:id="addButton" text="Add ➕" onAction="#handleAddItem"
+                style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-min-width: 100;"/>
+        <Button fx:id="updateButton" text="Update ✏️" onAction="#handleUpdateItem"
+                style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-min-width: 100;"/>
+        <Button fx:id="deleteButton" text="Delete 🗑️" onAction="#handleDeleteItem"
+                style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-min-width: 100;"/>
+    </HBox>
+
+    <!-- Table -->
+    <TableView fx:id="inventoryTable" style="-fx-max-height: 300;">
+        <columns>
+            <TableColumn fx:id="idCol" text="ID" minWidth="50"/>
+            <TableColumn fx:id="nameCol" text="Product Name" minWidth="200"/>
+            <TableColumn fx:id="currentStockCol" text="Current Stock" minWidth="100"/>
+            <TableColumn fx:id="unitCol" text="Unit" minWidth="80"/>
+            <TableColumn fx:id="categoryCol" text="Category" minWidth="120"/>
+            <TableColumn fx:id="alertThresholdCol" text="Alert Threshold" minWidth="100"/>
+        </columns>
+    </TableView>
+
+</VBox>

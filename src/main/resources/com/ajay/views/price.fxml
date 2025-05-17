@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.geometry.Pos?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml/1"
+      xmlns="http://javafx.com/javafx/21"
+      fx:controller="com.ajay.controllers.PriceController"
+      spacing="15" alignment="TOP_LEFT" style="-fx-padding: 15;">
+
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label text="Price Management System" style="-fx-font-size: 24; -fx-font-weight: bold;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button fx:id="adminModeButton" text="Admin Mode" style="-fx-background-color: #f39c12; -fx-text-fill: white;"/>
+        <Button fx:id="refreshButton" text="Refresh ♻️" onAction="#handleRefresh" style="-fx-background-color: #3498db; -fx-text-fill: white;"/>
+    </HBox>
+
+    <!-- Customer Type and Category -->
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label text="Customer Type:"/>
+        <ComboBox fx:id="customerTypeCombo" style="-fx-min-width: 120;"/>
+        <Button text="➕ Other" onAction="#handleNewCustomerType" style="-fx-background-color: transparent;"/>
+        
+        <Label text="Category:" style="-fx-padding: 0 0 0 20;"/>
+        <ComboBox fx:id="categoryCombo" style="-fx-min-width: 120;"/>
+        <Button text="➕ Other" onAction="#handleNewCategory" style="-fx-background-color: transparent;"/>
+    </HBox>
+
+    <!-- Search Bar -->
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <TextField fx:id="searchField" promptText="Search products..." style="-fx-min-width: 300;"/>
+        <Button text="Search 🔍" onAction="#handleSearch" style="-fx-background-color: #3498db; -fx-text-fill: white;"/>
+    </HBox>
+
+    <!-- Product Form -->
+    <GridPane hgap="10" vgap="10">
+        <columnConstraints>
+            <ColumnConstraints halignment="RIGHT" minWidth="100"/>
+            <ColumnConstraints halignment="LEFT" minWidth="200"/>
+        </columnConstraints>
+
+        <Label text="Product Name:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <TextField fx:id="productNameField" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+        <Label text="Unit:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <HBox spacing="5" alignment="CENTER_LEFT" GridPane.rowIndex="1" GridPane.columnIndex="1">
+            <ComboBox fx:id="unitCombo" style="-fx-min-width: 100;"/>
+            <Button text="➕ Other" onAction="#handleNewUnit" style="-fx-background-color: transparent;"/>
+        </HBox>
+
+        <Label text="Quantity:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <HBox spacing="5" alignment="CENTER_LEFT" GridPane.rowIndex="2" GridPane.columnIndex="1">
+            <TextField fx:id="quantityField" style="-fx-min-width: 50;"/>
+        </HBox>
+
+        <Label text="Purchase Price:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <TextField fx:id="purchasePriceField" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+        <Label text="Selling Price:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+        <TextField fx:id="sellingPriceField" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+        <Label text="Min Sell Price:" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+        <TextField fx:id="minSellingPriceField" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+
+        <Label text="Status:" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+        <Text fx:id="statusText" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+        <Text fx:id="minPriceStatusText" GridPane.rowIndex="7" GridPane.columnIndex="1" visible="false"/>
+    </GridPane>
+
+    <!-- Buttons -->
+    <HBox spacing="20" alignment="CENTER">
+        <Button fx:id="addButton" text="Add ➕" onAction="#handleAddPrice"
+                style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-min-width: 100;"/>
+        <Button fx:id="updateButton" text="Update ✏️" onAction="#handleUpdatePrice"
+                style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-min-width: 100;"/>
+        <Button fx:id="deleteButton" text="Delete 🗑️" onAction="#handleDeletePrice"
+                style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-min-width: 100;"/>
+    </HBox>
+
+    <!-- Table -->
+    <TableView fx:id="priceTable" style="-fx-max-height: 300;">
+        <columns>
+            <TableColumn fx:id="idCol" text="ID" minWidth="50"/>
+            <TableColumn fx:id="nameCol" text="Product Name" minWidth="200"/>
+            <TableColumn fx:id="quantityCol" text="Quantity" minWidth="80"/>
+            <TableColumn fx:id="unitCol" text="Unit" minWidth="80"/>
+            <TableColumn fx:id="categoryCol" text="Category" minWidth="120"/>
+            <TableColumn fx:id="customerTypeCol" text="Customer Type" minWidth="120"/>
+            <TableColumn fx:id="purchasePriceCol" text="Purchase Price" minWidth="100" visible="false"/>
+            <TableColumn fx:id="sellingPriceCol" text="Selling Price" minWidth="100"/>
+            <TableColumn fx:id="minSellingPriceCol" text="Min Sell Price" minWidth="100" visible="false"/>
+        </columns>
+    </TableView>
+
+</VBox>

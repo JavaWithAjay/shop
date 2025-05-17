@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.ajay.controllers.BillingController"
+      spacing="15" style="-fx-padding: 20; -fx-min-width: 1000; -fx-min-height: 700;">
+
+    <!-- Header Section -->
+    <Label text="Grocery Shop Dashboard" style="-fx-font-size: 20; -fx-font-weight: bold;" />
+    <Label text="Dashboard" style="-fx-font-size: 16; -fx-font-weight: bold;" />
+
+    <!-- Top HBox Section: Inputs on left, Totals on right -->
+    <HBox spacing="50" alignment="TOP_LEFT">
+
+        <!-- Left Inputs Section -->
+        <VBox spacing="10">
+            <!-- Navigation Buttons -->
+            <HBox spacing="10">
+                <Button text="Back" onAction="#goBack" style="-fx-font-weight: bold;" />
+                <Button text="Admin Mode" onAction="#toggleAdminView" style="-fx-font-weight: bold;" />
+            </HBox>
+
+            <!-- Input Grid -->
+            <GridPane hgap="10" vgap="10">
+                <columnConstraints>
+                    <ColumnConstraints hgrow="NEVER" minWidth="120"/>
+                    <ColumnConstraints hgrow="SOMETIMES" minWidth="150"/>
+                    <ColumnConstraints hgrow="NEVER" minWidth="80"/>
+                    <ColumnConstraints hgrow="SOMETIMES" minWidth="150"/>
+                </columnConstraints>
+
+                <!-- Row 0 -->
+                <Label text="Customer Type:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                <ComboBox fx:id="customerTypeCombo" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                <Label text="Product:" GridPane.rowIndex="0" GridPane.columnIndex="2"/>
+                <TextField fx:id="productField" promptText="Enter Product" onKeyReleased="#searchProduct"
+                           GridPane.rowIndex="0" GridPane.columnIndex="3"/>
+
+                <!-- Row 1 -->
+                <Label text="Qty:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                <TextField fx:id="quantityField" promptText="QTY" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                <Label text="Unit:" GridPane.rowIndex="1" GridPane.columnIndex="2"/>
+                <ComboBox fx:id="unitCombo" promptText="Select Unit" GridPane.rowIndex="1" GridPane.columnIndex="3"/>
+
+                <!-- Row 2 -->
+                <Label fx:id="purchasePriceLabel" text="Purchase Price:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                <TextField fx:id="purchasePriceField" promptText="0.00" style="-fx-alignment: CENTER-RIGHT;"
+                           GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                <Label fx:id="sellingPriceLabel" text="Selling Price:" GridPane.rowIndex="2" GridPane.columnIndex="2"/>
+                <TextField fx:id="sellingPriceField" promptText="0.00" style="-fx-alignment: CENTER-RIGHT;"
+                           GridPane.rowIndex="2" GridPane.columnIndex="3"/>
+
+                <!-- Row 3 -->
+                <Button text="Add to Bill" onAction="#addToBill"
+                        style="-fx-font-weight: bold; -fx-base: #2ecc71; -fx-min-width: 120;"
+                        GridPane.rowIndex="3" GridPane.columnIndex="1" GridPane.columnSpan="3"/>
+            </GridPane>
+        </VBox>
+
+        <!-- Right Totals Section -->
+        <VBox spacing="10" alignment="TOP_LEFT">
+            <Label text="Total:" style="-fx-font-weight: bold; -fx-font-size: 16;" />
+            <Label fx:id="totalLabel" text="₹0.00" style="-fx-font-weight: bold; -fx-font-size: 18;" />
+
+            <!-- Admin Totals -->
+            <VBox fx:id="adminPanel" spacing="5" visible="false">
+                <Label text="Purchase Total:" style="-fx-font-weight: bold; -fx-font-size: 16;" />
+                <Label fx:id="purchaseTotalLabel" text="₹0.00" style="-fx-font-weight: bold; -fx-font-size: 18;" />
+                <Label text="Profit:" style="-fx-font-weight: bold; -fx-font-size: 16;" />
+                <Label fx:id="profitLabel" text="₹0.00" style="-fx-font-weight: bold; -fx-font-size: 18;" />
+            </VBox>
+
+            <!-- Remove Button -->
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Button text="Remove Selected" onAction="#removeSelected"
+                        style="-fx-font-weight: bold; -fx-base: #e74c3c;" />
+            </HBox>
+
+            <!-- Admin Action Buttons -->
+            <HBox fx:id="adminButtons" spacing="10" alignment="CENTER" visible="false">
+                <Button fx:id="saveButton" text="Save" onAction="#saveData"
+                        style="-fx-font-weight: bold; -fx-base: #3498db;" />
+                <Button fx:id="retrieveButton" text="Retrieve" onAction="#retrieveData"
+                        style="-fx-font-weight: bold; -fx-base: #f39c12;" />
+                <Button fx:id="customerBillButton" text="Customer Bill" onAction="#generateCustomerBill"
+                        style="-fx-font-weight: bold; -fx-base: #9b59b6;" />
+                <Button fx:id="adminBillButton" text="Admin Bill" onAction="#generateAdminBill"
+                        style="-fx-font-weight: bold; -fx-base: #1abc9c;" />
+            </HBox>
+        </VBox>
+    </HBox>
+
+    <!-- Bill Table with ScrollPane -->
+    <ScrollPane fitToWidth="true" style="-fx-min-height: 300; -fx-max-height: 300;">
+        <TableView fx:id="billTable" style="-fx-min-height: 300;">
+            <columns>
+                <TableColumn text="Product" fx:id="productCol" minWidth="200">
+                    <cellValueFactory><PropertyValueFactory property="productName"/></cellValueFactory>
+                </TableColumn>
+                <TableColumn text="Qty" fx:id="quantityCol" minWidth="80">
+                    <cellValueFactory><PropertyValueFactory property="quantity"/></cellValueFactory>
+                </TableColumn>
+                <TableColumn text="Unit" fx:id="unitCol" minWidth="100">
+                    <cellValueFactory><PropertyValueFactory property="unit"/></cellValueFactory>
+                </TableColumn>
+                <TableColumn text="Selling Price" fx:id="sellingPriceCol" minWidth="120">
+                    <cellValueFactory><PropertyValueFactory property="price"/></cellValueFactory>
+                </TableColumn>
+                <TableColumn text="Total" fx:id="totalCol" minWidth="120">
+                    <cellValueFactory><PropertyValueFactory property="total"/></cellValueFactory>
+                </TableColumn>
+                <TableColumn text="Purchase Price" fx:id="purchasePriceCol" minWidth="120" visible="false">
+                    <cellValueFactory><PropertyValueFactory property="purchasePrice"/></cellValueFactory>
+                </TableColumn>
+                <TableColumn text="Profit" fx:id="profitCol" minWidth="120" visible="false">
+                    <cellValueFactory><PropertyValueFactory property="profit"/></cellValueFactory>
+                </TableColumn>
+                <TableColumn text="Price Level" fx:id="priceLevelCol" minWidth="120" visible="false">
+                    <cellValueFactory><PropertyValueFactory property="priceLevel"/></cellValueFactory>
+                </TableColumn>
+            </columns>
+        </TableView>
+    </ScrollPane>
+</VBox>
