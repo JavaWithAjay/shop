@@ -575,3 +575,9 @@ CREATE TABLE IF NOT EXISTS bill_items (
 SELECT * FROM udhar_khata;
 
 desc udhar_khata;
+
+SELECT COALESCE(payment_method, 'Unknown') as payment_method, 
+       SUM(total_amount) as amount 
+FROM transactions 
+WHERE transaction_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) 
+GROUP BY COALESCE(payment_method, 'Unknown')
