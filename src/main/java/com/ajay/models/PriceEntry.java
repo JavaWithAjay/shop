@@ -27,6 +27,19 @@ public class PriceEntry {
         this.category = new SimpleStringProperty(category);
     }
 
+    public PriceEntry(PriceEntry selectedEntry) {
+    this.id = new SimpleIntegerProperty(selectedEntry.getId());
+    this.name = new SimpleStringProperty(selectedEntry.getName());
+    this.unit = new SimpleStringProperty(selectedEntry.getUnit());
+    this.stockQuantity = new SimpleDoubleProperty(selectedEntry.getStockQuantity());
+    this.purchasePrice = new SimpleDoubleProperty(selectedEntry.getPurchasePrice());
+    this.sellingPrice = new SimpleDoubleProperty(selectedEntry.getSellingPrice());
+    this.minSellingPrice = new SimpleDoubleProperty(selectedEntry.getMinSellingPrice());
+    this.customerType = new SimpleStringProperty(selectedEntry.getCustomerType());
+    this.category = new SimpleStringProperty(selectedEntry.getCategory());
+}
+
+
     // Property getters
     public IntegerProperty idProperty() { return id; }
     public StringProperty nameProperty() { return name; }

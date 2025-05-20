@@ -21,7 +21,6 @@
         <VBox spacing="10">
             <!-- Navigation Buttons -->
             <HBox spacing="10">
-                <Button text="Back" onAction="#goBack" style="-fx-font-weight: bold;" />
                 <Button text="Admin Mode" onAction="#toggleAdminView" style="-fx-font-weight: bold;" />
             </HBox>
 

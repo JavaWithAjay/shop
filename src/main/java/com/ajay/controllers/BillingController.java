@@ -327,21 +327,6 @@ public class BillingController implements Initializable {
     }
 
     @FXML
-    private void goBack() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/ajay/views/dashboard.fxml"));
-            Parent root = loader.load();
-            if (productField != null && productField.getScene() != null) {
-                Stage stage = (Stage) productField.getScene().getWindow();
-                stage.setScene(new Scene(root));
-                stage.setMaximized(true);
-            }
-        } catch (IOException e) {
-            showAlert("Error", "Failed to go back: " + e.getMessage());
-        }
-    }
-
-    @FXML
     private void saveData() {
         if (billItems.isEmpty()) {
             showAlert("Error", "No items in the bill to save.");

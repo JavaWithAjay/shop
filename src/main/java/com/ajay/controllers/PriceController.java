@@ -14,7 +14,6 @@ import com.ajay.DatabaseConnection;
 import java.sql.*;
 import java.util.Optional;
 import java.util.regex.Pattern;
-import javafx.scene.input.KeyCode;
 
 public class PriceController {
 
@@ -73,7 +72,7 @@ public void initialize() {
     setupTableColumns();
     loadInitialData();
     setupFormListeners();
-    
+
     // Initialize admin mode settings
     adminModeButton.setOnAction(this::handleAdminMode);
     adminModeButton.setStyle("-fx-background-color: #f39c12; -fx-text-fill: white;");
@@ -81,19 +80,64 @@ public void initialize() {
     statusText.setVisible(false);
     purchasePriceCol.setVisible(false);
     minSellingPriceCol.setVisible(false);
-    
+
     // Add Enter key listener for search
     searchField.setOnKeyPressed(event -> {
         if (event.getCode() == KeyCode.ENTER) {
             handleSearch(new ActionEvent());
         }
     });
+
+    // Setup dynamic dropdown entries
+    setupDynamicDropdownAddition();
 }
 
-    @FXML
-private void handleClear(ActionEvent event) {
-    clearFormFields();
+private void setupDynamicDropdownAddition() {
+    setupComboWithAddOption(customerTypeCombo, customerTypes);
+    setupComboWithAddOption(categoryCombo, categories);
+    setupComboWithAddOption(unitCombo, units);
 }
+
+private void setupComboWithAddOption(ComboBox<String> comboBox, ObservableList<String> list) {
+    final String ADD_NEW_OPTION = "➕ Add New";
+
+    if (!list.contains(ADD_NEW_OPTION)) {
+        list.add(ADD_NEW_OPTION);
+    }
+
+    comboBox.setItems(list);
+
+    comboBox.setOnAction(event -> {
+        String selected = comboBox.getSelectionModel().getSelectedItem();
+
+        if (ADD_NEW_OPTION.equals(selected)) {
+            TextInputDialog dialog = new TextInputDialog();
+            dialog.setTitle("Add New Entry");
+            dialog.setHeaderText("Add a new item to the list:");
+            dialog.setContentText("Enter new value:");
+
+            dialog.showAndWait().ifPresent(input -> {
+                String newItem = input.trim();
+                if (!newItem.isEmpty() && !list.contains(newItem)) {
+                    list.add(list.size() - 1, newItem);  // Add before "Add New"
+                    comboBox.setItems(null);             // Reset the list
+                    comboBox.setItems(list);             // Reassign updated list
+                    comboBox.getSelectionModel().select(newItem);  // Select new item
+                } else {
+                    comboBox.getSelectionModel().clearSelection();
+                }
+            });
+        }
+    });
+}
+
+
+
+
+    @FXML
+    private void handleClear(ActionEvent event) {
+        clearFormFields();
+    }
 
     private void setupTableColumns() {
         idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
@@ -243,10 +287,45 @@ private void handleClear(ActionEvent event) {
     }
 
     @FXML
-    private void handleRefresh(ActionEvent event) {
-        clearFormFields();
-        loadInitialData();
+private void handleRefresh(ActionEvent event) {
+    // Clear form fields
+    clearFormFields();
+
+    // Reset dropdowns to fixed values only, removing dynamically added entries
+    resetDropdowns();
+
+    // Ensure the "➕ Add New" option is present at the end of each combo box list
+    addAddNewOptionIfMissing(customerTypes);
+    addAddNewOptionIfMissing(categories);
+    addAddNewOptionIfMissing(units);
+
+    // Refresh ComboBoxes with updated lists
+    customerTypeCombo.setItems(customerTypes);
+    categoryCombo.setItems(categories);
+    unitCombo.setItems(units);
+
+    // Select nothing initially in ComboBoxes
+    customerTypeCombo.getSelectionModel().clearSelection();
+    categoryCombo.getSelectionModel().clearSelection();
+    unitCombo.getSelectionModel().clearSelection();
+
+    // Reload data from the database into the table
+    loadPriceData();
+}
+
+// Helper method to add "➕ Add New" if missing in list
+private void addAddNewOptionIfMissing(ObservableList<String> list) {
+    final String ADD_NEW_OPTION = "➕ Add New";
+    if (!list.contains(ADD_NEW_OPTION)) {
+        list.add(ADD_NEW_OPTION);
+    } else {
+        // Remove duplicates just in case
+        while (list.lastIndexOf(ADD_NEW_OPTION) != list.indexOf(ADD_NEW_OPTION)) {
+            list.remove(list.lastIndexOf(ADD_NEW_OPTION));
+        }
     }
+}
+
 
     @FXML
     private void handleSearch(ActionEvent event) {
@@ -333,6 +412,9 @@ private void handleClear(ActionEvent event) {
     private void handleAddPrice(ActionEvent event) {
         if (!validateForm()) return;
         
+        // Create new entry from form data first (for immediate UI update)
+        PriceEntry newEntry = createEntryFromForm();
+        
         Connection conn = null;
         try {
             conn = DatabaseConnection.getInstance().getConnection();
@@ -372,24 +454,53 @@ private void handleClear(ActionEvent event) {
                 
                 try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
-                        System.out.println("Added product with ID: " + generatedKeys.getInt(1));
+                        // Update the entry with the generated ID
+                        newEntry.setId(generatedKeys.getInt(1));
+                        // Add to both main list and filtered list (if searching)
+                        priceEntries.add(newEntry);
+                        if (priceTable.getItems() != priceEntries) {
+                            priceTable.getItems().add(newEntry);
+                        }
                     }
                 }
                 
                 conn.commit();
-                loadPriceData();
                 clearFormFields();
                 showAlert(Alert.AlertType.INFORMATION, "Success", "Product added successfully");
             }
         } catch (NumberFormatException e) {
+            // Remove the entry if there was an error
+            priceEntries.remove(newEntry);
+            if (priceTable.getItems() != priceEntries) {
+                priceTable.getItems().remove(newEntry);
+            }
             showAlert(Alert.AlertType.ERROR, "Input Error", "Please enter valid numeric values");
             rollbackTransaction(conn);
         } catch (SQLException e) {
+            // Remove the entry if there was an error
+            priceEntries.remove(newEntry);
+            if (priceTable.getItems() != priceEntries) {
+                priceTable.getItems().remove(newEntry);
+            }
             showAlert(Alert.AlertType.ERROR, "Database Error", "Failed to add product: " + e.getMessage());
             rollbackTransaction(conn);
         } finally {
             closeConnection(conn);
         }
+    }
+
+    private PriceEntry createEntryFromForm() {
+        return new PriceEntry(
+            0, // Temporary ID, will be updated after database insert
+            productNameField.getText().trim(),
+            Double.parseDouble(purchasePriceField.getText()),
+            Double.parseDouble(sellingPriceField.getText()),
+            Double.parseDouble(minSellingPriceField.getText()),
+            Double.parseDouble(quantityField.getText()),
+            unitCombo.getValue(),
+            customerTypeCombo.getValue(),
+            categoryCombo.getValue()
+        );
     }
 
     @FXML
@@ -402,12 +513,31 @@ private void handleClear(ActionEvent event) {
 
         if (!validateForm()) return;
         
+        // Create updated entry from form data
+        PriceEntry updatedEntry = createEntryFromForm();
+        updatedEntry.setId(selectedEntry.getId());
+        
+        // Store old values in case we need to revert
+        PriceEntry oldEntry = new PriceEntry(selectedEntry);
+        
         Connection conn = null;
         try {
             conn = DatabaseConnection.getInstance().getConnection();
             conn.setAutoCommit(false);
             
-            int productId = selectedEntry.getId();
+            // Update the entry in the UI immediately
+            int index = priceEntries.indexOf(selectedEntry);
+            if (index >= 0) {
+                priceEntries.set(index, updatedEntry);
+            }
+            if (priceTable.getItems() != priceEntries) {
+                int filteredIndex = priceTable.getItems().indexOf(selectedEntry);
+                if (filteredIndex >= 0) {
+                    priceTable.getItems().set(filteredIndex, updatedEntry);
+                }
+            }
+            
+            // Proceed with database update
             String productName = productNameField.getText().trim();
             double purchasePrice = Double.parseDouble(purchasePriceField.getText());
             double sellingPrice = Double.parseDouble(sellingPriceField.getText());
@@ -434,7 +564,7 @@ private void handleClear(ActionEvent event) {
                 stmt.setInt(6, customerTypeId);
                 stmt.setInt(7, categoryId);
                 stmt.setInt(8, unitId);
-                stmt.setInt(9, productId);
+                stmt.setInt(9, selectedEntry.getId());
                 
                 int affectedRows = stmt.executeUpdate();
                 if (affectedRows == 0) {
@@ -442,14 +572,35 @@ private void handleClear(ActionEvent event) {
                 }
                 
                 conn.commit();
-                loadPriceData();
                 clearFormFields();
                 showAlert(Alert.AlertType.INFORMATION, "Success", "Product updated successfully");
             }
         } catch (NumberFormatException e) {
+            // Revert UI changes if error occurred
+            int index = priceEntries.indexOf(updatedEntry);
+            if (index >= 0) {
+                priceEntries.set(index, oldEntry);
+            }
+            if (priceTable.getItems() != priceEntries) {
+                int filteredIndex = priceTable.getItems().indexOf(updatedEntry);
+                if (filteredIndex >= 0) {
+                    priceTable.getItems().set(filteredIndex, oldEntry);
+                }
+            }
             showAlert(Alert.AlertType.ERROR, "Input Error", "Please enter valid numeric values");
             rollbackTransaction(conn);
         } catch (SQLException e) {
+            // Revert UI changes if error occurred
+            int index = priceEntries.indexOf(updatedEntry);
+            if (index >= 0) {
+                priceEntries.set(index, oldEntry);
+            }
+            if (priceTable.getItems() != priceEntries) {
+                int filteredIndex = priceTable.getItems().indexOf(updatedEntry);
+                if (filteredIndex >= 0) {
+                    priceTable.getItems().set(filteredIndex, oldEntry);
+                }
+            }
             showAlert(Alert.AlertType.ERROR, "Database Error", "Failed to update product: " + e.getMessage());
             rollbackTransaction(conn);
         } finally {
@@ -472,6 +623,12 @@ private void handleClear(ActionEvent event) {
         
         Optional<ButtonType> result = confirmation.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
+            // Remove from UI immediately
+            priceEntries.remove(selectedEntry);
+            if (priceTable.getItems() != priceEntries) {
+                priceTable.getItems().remove(selectedEntry);
+            }
+            
             Connection conn = null;
             try {
                 conn = DatabaseConnection.getInstance().getConnection();
@@ -487,32 +644,21 @@ private void handleClear(ActionEvent event) {
                     }
                     
                     conn.commit();
-                    loadPriceData();
                     clearFormFields();
                     showAlert(Alert.AlertType.INFORMATION, "Success", "Product deleted successfully");
                 }
             } catch (SQLException e) {
+                // Add back if error occurred
+                priceEntries.add(selectedEntry);
+                if (priceTable.getItems() != priceEntries) {
+                    priceTable.getItems().add(selectedEntry);
+                }
                 showAlert(Alert.AlertType.ERROR, "Database Error", "Failed to delete product: " + e.getMessage());
                 rollbackTransaction(conn);
             } finally {
                 closeConnection(conn);
             }
         }
-    }
-
-    @FXML
-    public void handleNewCustomerType(ActionEvent event) {
-        addNewDropdownValue("customer type", "customer_types", customerTypes);
-    }
-
-    @FXML
-    public void handleNewCategory(ActionEvent event) {
-        addNewDropdownValue("category", "categories", categories);
-    }
-
-    @FXML
-    public void handleNewUnit(ActionEvent event) {
-        addNewDropdownValue("unit", "units", units);
     }
 
     private void addNewDropdownValue(String typeName, String tableName, ObservableList<String> list) {
@@ -614,30 +760,30 @@ private void handleClear(ActionEvent event) {
         minPriceStatusText.setText("");
     }
 
-private void rollbackTransaction(Connection conn) {
-    if (conn != null) {
-        try {
-            if (!conn.isClosed()) {
-                conn.rollback();
+    private void rollbackTransaction(Connection conn) {
+        if (conn != null) {
+            try {
+                if (!conn.isClosed()) {
+                    conn.rollback();
+                }
+            } catch (SQLException e) {
+                System.err.println("Error rolling back transaction: " + e.getMessage());
             }
-        } catch (SQLException e) {
-            System.err.println("Error rolling back transaction: " + e.getMessage());
         }
     }
-}
 
-private void closeConnection(Connection conn) {
-    if (conn != null) {
-        try {
-            if (!conn.isClosed()) {
-                conn.setAutoCommit(true);
-                conn.close();
+    private void closeConnection(Connection conn) {
+        if (conn != null) {
+            try {
+                if (!conn.isClosed()) {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                System.err.println("Error closing connection: " + e.getMessage());
             }
-        } catch (SQLException e) {
-            System.err.println("Error closing connection: " + e.getMessage());
         }
     }
-}
 
     private void showAlert(Alert.AlertType type, String title, String message) {
         Alert alert = new Alert(type);

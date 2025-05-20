@@ -22,11 +22,9 @@
     <HBox spacing="10" alignment="CENTER_LEFT">
         <Label text="Customer Type:"/>
         <ComboBox fx:id="customerTypeCombo" style="-fx-min-width: 120;"/>
-        <Button text="➕ Other" onAction="#handleNewCustomerType" style="-fx-background-color: transparent;"/>
         
         <Label text="Category:" style="-fx-padding: 0 0 0 20;"/>
         <ComboBox fx:id="categoryCombo" style="-fx-min-width: 120;"/>
-        <Button text="➕ Other" onAction="#handleNewCategory" style="-fx-background-color: transparent;"/>
     </HBox>
 
     <!-- Search Bar -->
@@ -48,7 +46,6 @@
         <Label text="Unit:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
         <HBox spacing="5" alignment="CENTER_LEFT" GridPane.rowIndex="1" GridPane.columnIndex="1">
             <ComboBox fx:id="unitCombo" style="-fx-min-width: 100;"/>
-            <Button text="➕ Other" onAction="#handleNewUnit" style="-fx-background-color: transparent;"/>
         </HBox>
 
         <Label text="Quantity:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
