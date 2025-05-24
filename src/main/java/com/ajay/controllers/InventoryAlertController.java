@@ -424,7 +424,7 @@ public class InventoryAlertController {
 
             // Create table
             TableView<InventoryItem> alertTable = new TableView<>();
-            alertTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+            alertTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
             // Product column
             TableColumn<InventoryItem, String> productCol = new TableColumn<>("Product");
@@ -458,7 +458,12 @@ public class InventoryAlertController {
                 return new SimpleStringProperty(status);
             });
 
-            alertTable.getColumns().addAll(productCol, stockCol, thresholdCol, unitCol, statusCol);
+           // To this:
+            alertTable.getColumns().add(productCol);
+            alertTable.getColumns().add(stockCol);
+            alertTable.getColumns().add(thresholdCol);
+            alertTable.getColumns().add(unitCol);
+            alertTable.getColumns().add(statusCol);
 
             ObservableList<InventoryItem> alertItems = FXCollections.observableArrayList();
 

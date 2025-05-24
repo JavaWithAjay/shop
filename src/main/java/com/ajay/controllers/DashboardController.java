@@ -95,7 +95,12 @@ public class DashboardController {
         TableColumn<Map<String, String>, String> dateCol = new TableColumn<>("Last Transaction");
         dateCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().get("lastDate")));
 
-        udharKhataTable.getColumns().setAll(customerCol, phoneCol, creditCol, dateCol);
+        // To this:
+        udharKhataTable.getColumns().clear();
+        udharKhataTable.getColumns().add(customerCol);
+        udharKhataTable.getColumns().add(phoneCol);
+        udharKhataTable.getColumns().add(creditCol);
+        udharKhataTable.getColumns().add(dateCol);
     }
 
     private void startAutoRefresh() {
