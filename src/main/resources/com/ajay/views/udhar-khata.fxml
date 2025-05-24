@@ -55,8 +55,8 @@
     <HBox spacing="20" alignment="CENTER">
         <Button fx:id="addButton" text="Add ➕" onAction="#handleAddEntry"
                 style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-min-width: 100;"/>
-        <Button fx:id="updateButton" text="Update ✏️" onAction="#handleUpdateEntry"
-                style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-min-width: 100;"/>
+        <!-- <Button fx:id="updateButton" text="Update ✏️" onAction="#handleUpdateEntry"
+                style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-min-width: 100;"/> -->
         <Button fx:id="deleteButton" text="Delete 🗑️" onAction="#handleDeleteEntry"
                 style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-min-width: 100;"/>
         <Button fx:id="generatePdfButton" text="Generate PDF 📄" onAction="#handleGeneratePdf"

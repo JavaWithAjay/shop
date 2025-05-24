@@ -7,14 +7,13 @@ import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 
@@ -23,8 +22,8 @@ import java.io.FileOutputStream;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 public class UdharKhataController {
 
@@ -49,7 +48,7 @@ public class UdharKhataController {
     @FXML private TextArea descArea;
     
     @FXML private Button addButton;
-    @FXML private Button updateButton;
+    //@FXML private Button updateButton;
     @FXML private Button deleteButton;
     @FXML private Button clearButton;
     @FXML private Button refreshButton;
@@ -61,33 +60,31 @@ public class UdharKhataController {
     @FXML private Text balanceText;
     
     private ObservableList<UdharKhataEntry> khataEntries = FXCollections.observableArrayList();
-    private ObservableList<UdharKhataEntry> filteredEntries = FXCollections.observableArrayList();
+    private FilteredList<UdharKhataEntry> filteredEntries = new FilteredList<>(khataEntries, p -> true);
+    
+    // Date formatters
+    private final DateTimeFormatter displayDateFormat = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+    private final DateTimeFormatter dbDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @FXML
-    public void initialize() {
+public void initialize() {
+    try {
         setupTableColumns();
+        // Set current date by default with validation
+        dateField.setText(LocalDate.now().format(displayDateFormat));
         loadInitialData();
         setupFormListeners();
-        
-        // Set current date by default
-        dateField.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
         
         // Real-time search filtering
         searchField.textProperty().addListener((obs, oldVal, newVal) -> filterEntries());
         phoneField.textProperty().addListener((obs, oldVal, newVal) -> filterEntries());
         
-        // Update table immediately on data changes
-        khataEntries.addListener((ListChangeListener<UdharKhataEntry>) c -> {
-            filterEntries();
+        khataEntries.addListener((ListChangeListener.Change<? extends UdharKhataEntry> c) -> {
             updateSummary();
         });
+    } catch (Exception e) {
+        showAlert(Alert.AlertType.ERROR, "Initialization Error", "Failed to initialize: " + e.getMessage());
     }
-
-    // Add this method to your controller if missing
-@FXML
-private void handleSearch(ActionEvent event) {
-    // This can remain empty since we're using real-time filtering
-    // Or you can add additional search logic here if needed
 }
 
     private void setupTableColumns() {
@@ -114,34 +111,33 @@ private void handleSearch(ActionEvent event) {
 
     private void filterEntries() {
         String searchTerm = searchField.getText().trim().toLowerCase();
-        String phone = phoneField.getText().trim();
+        String phoneTerm = phoneField.getText().trim().toLowerCase();
         
-        filteredEntries.clear();
-        
-        // If both search fields are empty, show all entries
-        if (searchTerm.isEmpty() && phone.isEmpty()) {
-            filteredEntries.addAll(khataEntries);
-            return;
-        }
-        
-        // Create flexible search pattern
-        String flexiblePattern = searchTerm.replaceAll("(\\D)(\\d)", "$1.*$2")
-                                        .replaceAll("(\\d)(\\D)", "$1.*$2")
-                                        .replaceAll("\\s+", ".*")
-                                        .replaceAll("[^a-zA-Z0-9.*]", ".*");
-        
-        Pattern pattern = Pattern.compile(flexiblePattern);
-        
-        for (UdharKhataEntry entry : khataEntries) {
-            boolean matchesPhone = entry.getPhone().contains(phone);
-            boolean matchesName = pattern.matcher(entry.getCustomerName().toLowerCase()).find();
-            boolean matchesProduct = pattern.matcher(entry.getProductName().toLowerCase()).find();
-            
-            if ((phone.isEmpty() || matchesPhone) && 
-                (searchTerm.isEmpty() || matchesName || matchesProduct)) {
-                filteredEntries.add(entry);
+        filteredEntries.setPredicate(entry -> {
+            if (searchTerm.isEmpty() && phoneTerm.isEmpty()) {
+                return true;
             }
-        }
+            
+            // Safe handling of null values
+            String productName = entry.getProductName() != null ? entry.getProductName().toLowerCase() : "";
+            String customerName = entry.getCustomerName() != null ? entry.getCustomerName().toLowerCase() : "";
+            String phone = entry.getPhone() != null ? entry.getPhone().toLowerCase() : "";
+            String description = entry.getDescription() != null ? entry.getDescription().toLowerCase() : "";
+            
+            boolean matchesPhone = phone.contains(phoneTerm);
+            boolean matchesSearch = customerName.contains(searchTerm) || 
+                                  productName.contains(searchTerm) || 
+                                  phone.contains(searchTerm) ||
+                                  description.contains(searchTerm);
+            
+            if (!phoneTerm.isEmpty() && !searchTerm.isEmpty()) {
+                return matchesPhone && matchesSearch;
+            } else if (!phoneTerm.isEmpty()) {
+                return matchesPhone;
+            } else {
+                return matchesSearch;
+            }
+        });
     }
 
     private void loadInitialData() {
@@ -175,40 +171,62 @@ private void handleSearch(ActionEvent event) {
     private void populateFormFields(UdharKhataEntry entry) {
         customerNameField.setText(entry.getCustomerName());
         phoneField.setText(entry.getPhone());
-        productField.setText(entry.getProductName());
+        productField.setText(entry.getProductName() != null ? entry.getProductName() : "");
         amountField.setText(String.valueOf(entry.getAmount()));
         paidField.setText(String.valueOf(entry.getPaidAmount()));
         dateField.setText(entry.getDate());
-        descArea.setText(entry.getDescription());
+        descArea.setText(entry.getDescription() != null ? entry.getDescription() : "");
         
         updateStatus();
     }
 
     private void loadKhataData() {
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(
-                 "SELECT id, customer_name, phone, product_name, amount, paid_amount, " +
-                 "date, description FROM udhar_khata ORDER BY date DESC")) {
+    try (Connection conn = DatabaseConnection.getInstance().getConnection();
+         Statement stmt = conn.createStatement();
+         ResultSet rs = stmt.executeQuery(
+             "SELECT id, customer_name, phone, product_name, amount, paid_amount, " +
+             "date, description FROM udhar_khata ORDER BY date DESC")) {
+        
+        khataEntries.clear();
+        while (rs.next()) {
+            // Safely handle null dates
+            String dbDate = rs.getString("date");
+            String displayDate = "";
             
-            khataEntries.clear();
-            while (rs.next()) {
-                UdharKhataEntry entry = new UdharKhataEntry(
-                    rs.getInt("id"),
-                    rs.getString("customer_name"),
-                    rs.getString("phone"),
-                    rs.getString("product_name"),
-                    rs.getDouble("amount"),
-                    rs.getDouble("paid_amount"),
-                    rs.getString("date"),
-                    rs.getString("description")
-                );
-                khataEntries.add(entry);
+            if (dbDate != null && !dbDate.trim().isEmpty()) {
+                try {
+                    // First try to parse as DB format (YYYY-MM-DD)
+                    LocalDate date = LocalDate.parse(dbDate, dbDateFormat);
+                    displayDate = date.format(displayDateFormat);
+                } catch (DateTimeParseException e1) {
+                    try {
+                        // If that fails, try display format (DD-MM-YYYY)
+                        LocalDate date = LocalDate.parse(dbDate, displayDateFormat);
+                        displayDate = dbDate; // already in display format
+                    } catch (DateTimeParseException e2) {
+                        // If both fail, use raw value
+                        displayDate = dbDate;
+                    }
+                }
             }
-        } catch (SQLException e) {
-            showAlert(Alert.AlertType.ERROR, "Database Error", "Failed to load Udhar Khata: " + e.getMessage());
+            
+            // Safely handle all other fields
+            UdharKhataEntry entry = new UdharKhataEntry(
+                rs.getInt("id"),
+                rs.getString("customer_name") != null ? rs.getString("customer_name") : "",
+                rs.getString("phone") != null ? rs.getString("phone") : "",
+                rs.getString("product_name") != null ? rs.getString("product_name") : "",
+                rs.getDouble("amount"),
+                rs.getDouble("paid_amount"),
+                displayDate,
+                rs.getString("description") != null ? rs.getString("description") : ""
+            );
+            khataEntries.add(entry);
         }
+    } catch (SQLException e) {
+        showAlert(Alert.AlertType.ERROR, "Database Error", "Failed to load Udhar Khata: " + e.getMessage());
     }
+}
 
     private void updateSummary() {
         double totalUdhar = khataEntries.stream().mapToDouble(UdharKhataEntry::getAmount).sum();
@@ -234,129 +252,144 @@ private void handleSearch(ActionEvent event) {
     }
 
     @FXML
-    private void handleClearSearch(ActionEvent event) {
+    private void handleSearch(ActionEvent event) {
         searchField.clear();
         phoneField.clear();
     }
 
     @FXML
-    private void handleAddEntry(ActionEvent event) {
-        if (!validateForm()) return;
-        
-        Connection conn = null;
-        try {
-            conn = DatabaseConnection.getInstance().getConnection();
-            conn.setAutoCommit(false);
-            
-            String sql = "INSERT INTO udhar_khata (customer_name, phone, product_name, " +
-                        "amount, paid_amount, date, description) " +
-                        "VALUES (?, ?, ?, ?, ?, ?, ?)";
-            
-            try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-                stmt.setString(1, customerNameField.getText().trim());
-                stmt.setString(2, phoneField.getText().trim());
-                stmt.setString(3, productField.getText().trim());
-                stmt.setDouble(4, Double.parseDouble(amountField.getText()));
-                stmt.setDouble(5, Double.parseDouble(paidField.getText()));
-                stmt.setString(6, dateField.getText().trim());
-                stmt.setString(7, descArea.getText().trim());
-                
-                int affectedRows = stmt.executeUpdate();
-                if (affectedRows == 0) {
-                    throw new SQLException("Creating entry failed, no rows affected.");
-                }
-                
-                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        // Add new entry to the observable list
-                        UdharKhataEntry newEntry = new UdharKhataEntry(
-                            generatedKeys.getInt(1),
-                            customerNameField.getText().trim(),
-                            phoneField.getText().trim(),
-                            productField.getText().trim(),
-                            Double.parseDouble(amountField.getText()),
-                            Double.parseDouble(paidField.getText()),
-                            dateField.getText().trim(),
-                            descArea.getText().trim()
-                        );
-                        khataEntries.add(newEntry);
-                    }
-                }
-                
-                conn.commit();
-                clearFormFields();
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Udhar entry added successfully");
-            }
-        } catch (NumberFormatException e) {
-            showAlert(Alert.AlertType.ERROR, "Input Error", "Please enter valid numeric values");
-            rollbackTransaction(conn);
-        } catch (SQLException e) {
-            showAlert(Alert.AlertType.ERROR, "Database Error", "Failed to add entry: " + e.getMessage());
-            rollbackTransaction(conn);
-        } finally {
-            closeConnection(conn);
-        }
+private void handleAddEntry(ActionEvent event) {
+    if (!validateForm()) return;
+
+    LocalDate parsedDate;
+    try {
+        // Validate and parse the date early
+        parsedDate = LocalDate.parse(dateField.getText().trim(), displayDateFormat);
+    } catch (DateTimeParseException e) {
+        showAlert(Alert.AlertType.ERROR, "Invalid Date", "Please enter date in DD-MM-YYYY format");
+        return;
     }
 
-    @FXML
-    private void handleUpdateEntry(ActionEvent event) {
-        UdharKhataEntry selectedEntry = khataTable.getSelectionModel().getSelectedItem();
-        if (selectedEntry == null) {
-            showAlert(Alert.AlertType.WARNING, "No Selection", "Please select an entry to update");
-            return;
-        }
+    Connection conn = null;
+    try {
+        conn = DatabaseConnection.getInstance().getConnection();
+        conn.setAutoCommit(false);
 
-        if (!validateForm()) return;
-        
-        Connection conn = null;
-        try {
-            conn = DatabaseConnection.getInstance().getConnection();
-            conn.setAutoCommit(false);
-            
-            String sql = "UPDATE udhar_khata SET customer_name = ?, phone = ?, product_name = ?, " +
-                        "amount = ?, paid_amount = ?, date = ?, description = ? WHERE id = ?";
-            
-            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setString(1, customerNameField.getText().trim());
-                stmt.setString(2, phoneField.getText().trim());
-                stmt.setString(3, productField.getText().trim());
-                stmt.setDouble(4, Double.parseDouble(amountField.getText()));
-                stmt.setDouble(5, Double.parseDouble(paidField.getText()));
-                stmt.setString(6, dateField.getText().trim());
-                stmt.setString(7, descArea.getText().trim());
-                stmt.setInt(8, selectedEntry.getId());
-                
-                int affectedRows = stmt.executeUpdate();
-                if (affectedRows == 0) {
-                    throw new SQLException("Updating entry failed, no rows affected.");
-                }
-                
-                // Update the entry in the observable list
-                selectedEntry.setCustomerName(customerNameField.getText().trim());
-                selectedEntry.setPhone(phoneField.getText().trim());
-                selectedEntry.setProductName(productField.getText().trim());
-                selectedEntry.setAmount(Double.parseDouble(amountField.getText()));
-                selectedEntry.setPaidAmount(Double.parseDouble(paidField.getText()));
-                selectedEntry.setDate(dateField.getText().trim());
-                selectedEntry.setDescription(descArea.getText().trim());
-                
-                // Refresh the table
-                khataTable.refresh();
-                
-                conn.commit();
-                clearFormFields();
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Udhar entry updated successfully");
+        String sql = "INSERT INTO udhar_khata (customer_name, phone, product_name, " +
+                     "amount, paid_amount, date, description) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            stmt.setString(1, customerNameField.getText().trim());
+            stmt.setString(2, phoneField.getText().trim());
+            stmt.setString(3, productField.getText().trim());
+            stmt.setDouble(4, Double.parseDouble(amountField.getText().trim()));
+            stmt.setDouble(5, Double.parseDouble(paidField.getText().trim()));
+            stmt.setString(6, parsedDate.format(dbDateFormat));
+            stmt.setString(7, descArea.getText().trim());
+
+            int affectedRows = stmt.executeUpdate();
+            if (affectedRows == 0) {
+                throw new SQLException("Creating entry failed, no rows affected.");
             }
-        } catch (NumberFormatException e) {
-            showAlert(Alert.AlertType.ERROR, "Input Error", "Please enter valid numeric values");
-            rollbackTransaction(conn);
-        } catch (SQLException e) {
-            showAlert(Alert.AlertType.ERROR, "Database Error", "Failed to update entry: " + e.getMessage());
-            rollbackTransaction(conn);
-        } finally {
-            closeConnection(conn);
+
+            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    UdharKhataEntry newEntry = new UdharKhataEntry(
+                        generatedKeys.getInt(1),
+                        customerNameField.getText().trim(),
+                        phoneField.getText().trim(),
+                        productField.getText().trim(),
+                        Double.parseDouble(amountField.getText().trim()),
+                        Double.parseDouble(paidField.getText().trim()),
+                        dateField.getText().trim(), // Keep original display format
+                        descArea.getText().trim()
+                    );
+                    khataEntries.add(newEntry);
+                }
+            }
+
+            conn.commit();
+            clearFormFields();
+            showAlert(Alert.AlertType.INFORMATION, "Success", "Udhar entry added successfully");
         }
+    } catch (NumberFormatException e) {
+        showAlert(Alert.AlertType.ERROR, "Input Error", "Please enter valid numeric values for amount and paid amount.");
+        rollbackTransaction(conn);
+    } catch (SQLException e) {
+        showAlert(Alert.AlertType.ERROR, "Database Error", "Failed to add entry: " + e.getMessage());
+        rollbackTransaction(conn);
+    } finally {
+        closeConnection(conn);
     }
+}
+
+
+    // @FXML
+    // private void handleUpdateEntry(ActionEvent event) {
+    //     UdharKhataEntry selectedEntry = khataTable.getSelectionModel().getSelectedItem();
+    //     if (selectedEntry == null) {
+    //         showAlert(Alert.AlertType.WARNING, "No Selection", "Please select an entry to update");
+    //         return;
+    //     }
+
+    //     if (!validateForm()) return;
+        
+    //     Connection conn = null;
+    //     try {
+    //         conn = DatabaseConnection.getInstance().getConnection();
+    //         conn.setAutoCommit(false);
+            
+    //         String sql = "UPDATE udhar_khata SET customer_name = ?, phone = ?, product_name = ?, " +
+    //                     "amount = ?, paid_amount = ?, date = ?, description = ? WHERE id = ?";
+            
+    //         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+    //             stmt.setString(1, customerNameField.getText().trim());
+    //             stmt.setString(2, phoneField.getText().trim());
+    //             stmt.setString(3, productField.getText().trim());
+    //             stmt.setDouble(4, Double.parseDouble(amountField.getText()));
+    //             stmt.setDouble(5, Double.parseDouble(paidField.getText()));
+                
+    //             // Convert display date to DB format
+    //             LocalDate date = LocalDate.parse(dateField.getText().trim(), displayDateFormat);
+    //             stmt.setString(6, date.format(dbDateFormat));
+                
+    //             stmt.setString(7, descArea.getText().trim());
+    //             stmt.setInt(8, selectedEntry.getId());
+                
+    //             int affectedRows = stmt.executeUpdate();
+    //             if (affectedRows == 0) {
+    //                 throw new SQLException("Updating entry failed, no rows affected.");
+    //             }
+                
+    //             // Update the entry
+    //             selectedEntry.setCustomerName(customerNameField.getText().trim());
+    //             selectedEntry.setPhone(phoneField.getText().trim());
+    //             selectedEntry.setProductName(productField.getText().trim());
+    //             selectedEntry.setAmount(Double.parseDouble(amountField.getText()));
+    //             selectedEntry.setPaidAmount(Double.parseDouble(paidField.getText()));
+    //             selectedEntry.setDate(dateField.getText().trim());
+    //             selectedEntry.setDescription(descArea.getText().trim());
+                
+    //             khataTable.refresh();
+                
+    //             conn.commit();
+    //             clearFormFields();
+    //             showAlert(Alert.AlertType.INFORMATION, "Success", "Udhar entry updated successfully");
+    //         }
+    //     } catch (DateTimeParseException e) {
+    //         showAlert(Alert.AlertType.ERROR, "Date Error", "Please enter date in DD-MM-YYYY format");
+    //         rollbackTransaction(conn);
+    //     } catch (NumberFormatException e) {
+    //         showAlert(Alert.AlertType.ERROR, "Input Error", "Please enter valid numeric values");
+    //         rollbackTransaction(conn);
+    //     } catch (SQLException e) {
+    //         showAlert(Alert.AlertType.ERROR, "Database Error", "Failed to update entry: " + e.getMessage());
+    //         rollbackTransaction(conn);
+    //     } finally {
+    //         closeConnection(conn);
+    //     }
+    // }
 
     @FXML
     private void handleDeleteEntry(ActionEvent event) {
@@ -388,7 +421,6 @@ private void handleSearch(ActionEvent event) {
                         throw new SQLException("Deleting entry failed, no rows affected.");
                     }
                     
-                    // Remove from observable list
                     khataEntries.remove(selectedEntry);
                     
                     conn.commit();
@@ -413,13 +445,11 @@ private void handleSearch(ActionEvent event) {
             return;
         }
 
-        // Get customer name for PDF filename if filtered
         String customerName = "";
         if (!filteredEntries.isEmpty()) {
             customerName = "_" + filteredEntries.get(0).getCustomerName().replaceAll("[^a-zA-Z0-9]", "");
         }
 
-        // Get the user's downloads folder
         String userHome = System.getProperty("user.home");
         File downloadsFolder = new File(userHome, "Downloads");
         String filePath = downloadsFolder.getPath() + File.separator + 
@@ -431,14 +461,12 @@ private void handleSearch(ActionEvent event) {
             PdfWriter.getInstance(document, new FileOutputStream(filePath));
             document.open();
 
-            // Add title
             Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, BaseColor.BLACK);
             Paragraph title = new Paragraph("UDHAR KHATA REPORT", titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
             title.setSpacingAfter(10);
             document.add(title);
 
-            // Add date
             Font dateFont = FontFactory.getFont(FontFactory.HELVETICA, 12, BaseColor.BLACK);
             Paragraph date = new Paragraph("Generated on: " + 
                 LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")), dateFont);
@@ -446,7 +474,6 @@ private void handleSearch(ActionEvent event) {
             date.setSpacingAfter(20);
             document.add(date);
 
-            // Add summary
             double totalUdhar = entriesToPrint.stream().mapToDouble(UdharKhataEntry::getAmount).sum();
             double totalPaid = entriesToPrint.stream().mapToDouble(UdharKhataEntry::getPaidAmount).sum();
             double balance = totalUdhar - totalPaid;
@@ -467,13 +494,11 @@ private void handleSearch(ActionEvent event) {
             summary.setSpacingAfter(20);
             document.add(summary);
 
-            // Create table
-            PdfPTable table = new PdfPTable(8); // 8 columns
+            PdfPTable table = new PdfPTable(8);
             table.setWidthPercentage(100);
             table.setSpacingBefore(10f);
             table.setSpacingAfter(10f);
 
-            // Add table headers
             String[] headers = {"ID", "Customer", "Phone", "Product", "Amount", "Paid", "Status", "Date"};
             for (String header : headers) {
                 PdfPCell cell = new PdfPCell(new Phrase(header));
@@ -483,16 +508,14 @@ private void handleSearch(ActionEvent event) {
                 table.addCell(cell);
             }
 
-            // Add table rows
             for (UdharKhataEntry entry : entriesToPrint) {
                 table.addCell(createCell(String.valueOf(entry.getId())));
                 table.addCell(createCell(entry.getCustomerName()));
                 table.addCell(createCell(entry.getPhone()));
-                table.addCell(createCell(entry.getProductName()));
+                table.addCell(createCell(entry.getProductName() != null ? entry.getProductName() : ""));
                 table.addCell(createCell(String.format("₹%.2f", entry.getAmount())));
                 table.addCell(createCell(String.format("₹%.2f", entry.getPaidAmount())));
                 
-                // Highlight status
                 if (entry.getStatus().equals("Pending")) {
                     table.addCell(createRedCell(entry.getStatus()));
                 } else {

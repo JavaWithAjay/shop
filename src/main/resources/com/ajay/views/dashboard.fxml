@@ -28,9 +28,13 @@
             <Button text="Inventory" 
                     style="-fx-background-color: transparent; -fx-text-fill: white; -fx-min-width: 180; -fx-alignment: CENTER_LEFT;" 
                     onAction="#showInventory"/>
-            <Button text="Udhar Khata" 
+            <Button text="Udhar Khata (Credit Ledger)" 
                     style="-fx-background-color: transparent; -fx-text-fill: white; -fx-min-width: 180; -fx-alignment: CENTER_LEFT;" 
                     onAction="#showUdharKhata"/>
+            <Button text="Return Management" 
+        style="-fx-background-color: transparent; -fx-text-fill: white; -fx-min-width: 180; -fx-alignment: CENTER_LEFT;" 
+        onAction="#showReturnPage" />
+
         </VBox>
     </left>
     

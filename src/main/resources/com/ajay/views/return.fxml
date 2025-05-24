@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.geometry.*?>
+<?import javafx.collections.*?>
+<?import javafx.scene.control.cell.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.ajay.controllers.ReturnController"
+      spacing="10" style="-fx-padding: 20; -fx-background-color: #f5f5f5;">
+
+    <Label text="RETURN MANAGEMENT" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
+
+    <HBox spacing="20" alignment="CENTER_LEFT">
+        <VBox spacing="5">
+            <Label text="Search Returns" style="-fx-font-weight: bold;"/>
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <TextField fx:id="searchField" promptText="Enter customer/product name" prefWidth="250"/>
+                <Button text="Search" onAction="#handleSearch" style="-fx-background-color: #3498db; -fx-text-fill: white;"/>
+                <Button text="Clear" onAction="#clearSearch" style="-fx-background-color: #95a5a6; -fx-text-fill: white;"/>
+            </HBox>
+
+            <Label text="Filter Options" style="-fx-font-weight: bold;"/>
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <ComboBox fx:id="statusFilter" promptText="Status">
+    <items>
+        <FXCollections fx:factory="observableArrayList">
+            <Label text="All" />
+            <Label text="Pending" />
+            <Label text="Approved" />
+            <Label text="Rejected" />
+            <Label text="Processed" />
+        </FXCollections>
+    </items>
+</ComboBox>
+
+                <DatePicker fx:id="fromDate" promptText="From Date"/>
+                <DatePicker fx:id="toDate" promptText="To Date"/>
+                <Button text="Apply Filters" onAction="#applyFilters" style="-fx-background-color: #3498db; -fx-text-fill: white;"/>
+            </HBox>
+        </VBox>
+    </HBox>
+
+    <TableView fx:id="returnTable" prefHeight="400">
+        <columns>
+            <TableColumn text="Customer name" prefWidth="80">
+                <cellValueFactory>
+                    <PropertyValueFactory property="customerName"/>
+                </cellValueFactory>
+            </TableColumn>
+            <TableColumn text="Product" prefWidth="150">
+                <cellValueFactory><PropertyValueFactory property="productName"/></cellValueFactory>
+            </TableColumn>
+            <TableColumn text="Qty" prefWidth="50">
+                <cellValueFactory><PropertyValueFactory property="quantity"/></cellValueFactory>
+            </TableColumn>
+            <TableColumn text="Price" prefWidth="80">
+                <cellValueFactory><PropertyValueFactory property="price"/></cellValueFactory>
+            </TableColumn>
+            <TableColumn text="Return Date" prefWidth="100">
+                <cellValueFactory><PropertyValueFactory property="returnDate"/></cellValueFactory>
+            </TableColumn>
+            <TableColumn text="Reason" prefWidth="150">
+                <cellValueFactory><PropertyValueFactory property="reason"/></cellValueFactory>
+            </TableColumn>
+            <TableColumn text="Status" prefWidth="100">
+                <cellValueFactory><PropertyValueFactory property="status"/></cellValueFactory>
+            </TableColumn>
+        </columns>
+    </TableView>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button text="Add New Return" onAction="#showAddReturnDialog" style="-fx-background-color: #3498db; -fx-text-fill: white;"/>
+        <Button text="Print Report" onAction="#generatePdfReport" style="-fx-background-color: #16a085; -fx-text-fill: white;"/>
+    </HBox>
+
+    <HBox spacing="20" style="-fx-padding: 10; -fx-background-color: #ecf0f1; -fx-background-radius: 5;">
+        <VBox spacing="5">
+            <Label text="Today's Returns" style="-fx-font-weight: bold;"/>
+            <Label fx:id="todayReturns" text="0" style="-fx-font-size: 18px;"/>
+        </VBox>
+        <VBox spacing="5">
+            <Label text="Pending Returns" style="-fx-font-weight: bold;"/>
+            <Label fx:id="pendingReturns" text="0" style="-fx-font-size: 18px; -fx-text-fill: #e74c3c;"/>
+        </VBox>
+        <VBox spacing="5">
+            <Label text="Total Value" style="-fx-font-weight: bold;"/>
+            <Label fx:id="totalValue" text="₹0.00" style="-fx-font-size: 18px; -fx-text-fill: #27ae60;"/>
+        </VBox>
+    </HBox>
+</VBox>

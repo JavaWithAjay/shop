@@ -581,3 +581,90 @@
 -- FROM transactions 
 -- WHERE transaction_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) 
 -- GROUP BY COALESCE(payment_method, 'Unknown')
+
+-- desc products;
+
+-- ALTER TABLE products ADD UNIQUE (name);
+
+-- CREATE TABLE returns (
+--     id INT AUTO_INCREMENT PRIMARY KEY,
+--     bill_number INT NOT NULL,
+--     product_id INT NOT NULL,
+--     quantity DECIMAL(10,2) NOT NULL,
+--     price DECIMAL(10,2) NOT NULL,
+--     return_date DATE NOT NULL,
+--     reason VARCHAR(255),
+--     status VARCHAR(20) DEFAULT 'Pending',
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+--     FOREIGN KEY (bill_number) REFERENCES bills(id),
+--     FOREIGN KEY (product_id) REFERENCES products(id)
+-- );
+
+-- SELECT id, name FROM products;
+
+
+
+
+-- -- Create index for better performance
+-- CREATE INDEX idx_returns_bill_number ON returns(bill_number);
+-- CREATE INDEX idx_returns_status ON returns(status);
+-- CREATE INDEX idx_returns_date ON returns(return_date);
+
+-- DESCRIBE bills;
+
+
+-- INSERT INTO bills (id, total, profit, purchase_total, bill_date)
+-- VALUES
+--   (1004, 90.00, 20.00, 70.00, '2023-05-15 00:00:00'),
+--   (1005, 250.00, 50.00, 200.00, '2023-05-16 00:00:00'),
+--   (1006, 540.00, 120.00, 420.00, '2023-05-17 00:00:00');
+  
+--   DESCRIBE products;
+
+--   DELETE FROM products WHERE name IN ('Product A', 'Product B', 'Product C');
+
+--  INSERT INTO products (name, category_id, unit_id, purchase_price, selling_price, min_selling_price, stock_quantity)
+-- VALUES
+-- ('Product B', 1, 1, 200.00, 250.00, 230.00, 50.000),
+-- ('Product C', 1, 1, 150.00, 180.00, 160.00, 30.000);
+
+-- Procedure to process a return
+-- DELIMITER //
+-- CREATE PROCEDURE ProcessReturn(IN p_return_id INT, IN p_admin_id INT)
+-- BEGIN
+--     DECLARE v_product_name VARCHAR(100);
+--     DECLARE v_quantity DECIMAL(10,2);
+--     DECLARE v_bill_number INT;
+    
+--     -- Get return details
+--     SELECT product_name, quantity, bill_number 
+--     INTO v_product_name, v_quantity, v_bill_number
+--     FROM returns WHERE id = p_return_id;
+    
+--     -- Update inventory
+--     UPDATE inventory 
+--     SET stock = stock + v_quantity
+--     WHERE product_id = (SELECT id FROM products WHERE name = v_product_name);
+    
+--     -- Update return status
+--     UPDATE returns 
+--     SET status = 'Processed', 
+--         processed_by = p_admin_id,
+--         processed_at = NOW()
+--     WHERE id = p_return_id;
+    
+--     -- Insert into transaction log
+--     INSERT INTO return_transactions (return_id, action, admin_id)
+--     VALUES (p_return_id, 'PROCESSED', p_admin_id);
+-- END //
+-- DELIMITER ;
+
+-- -- View for return statistics
+-- CREATE VIEW return_stats AS
+-- SELECT 
+--     status,
+--     COUNT(*) as count,
+--     SUM(quantity * price) as total_value
+-- FROM returns
+-- GROUP BY status;

@@ -22,6 +22,8 @@
             <!-- Navigation Buttons -->
             <HBox spacing="10">
                 <Button text="Admin Mode" onAction="#toggleAdminView" style="-fx-font-weight: bold;" />
+                <Button fx:id="refreshButton" text="Refresh" onAction="#refreshData"
+        style="-fx-font-weight: bold; -fx-base: #95a5a6;" />
             </HBox>
 
             <!-- Input Grid -->
@@ -37,7 +39,7 @@
                 <Label text="Customer Type:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
                 <ComboBox fx:id="customerTypeCombo" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
                 <Label text="Product:" GridPane.rowIndex="0" GridPane.columnIndex="2"/>
-                <TextField fx:id="productField" promptText="Enter Product" onKeyReleased="#searchProduct"
+                <TextField fx:id="productField" promptText="Enter Product"
                            GridPane.rowIndex="0" GridPane.columnIndex="3"/>
 
                 <!-- Row 1 -->
@@ -98,6 +100,9 @@
     <ScrollPane fitToWidth="true" style="-fx-min-height: 300; -fx-max-height: 300;">
         <TableView fx:id="billTable" style="-fx-min-height: 300;">
             <columns>
+                <TableColumn text="ID" fx:id="idCol" minWidth="50" visible="false">
+                    <cellValueFactory><PropertyValueFactory property="id"/></cellValueFactory>
+                </TableColumn>
                 <TableColumn text="Product" fx:id="productCol" minWidth="200">
                     <cellValueFactory><PropertyValueFactory property="productName"/></cellValueFactory>
                 </TableColumn>

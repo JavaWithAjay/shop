@@ -428,6 +428,36 @@ private void loadBillingAnalytics(Connection conn) throws SQLException {
         }
     }
 
+    @FXML
+private void showReturnPage() {
+    try {
+        if (usernameLabel != null && usernameLabel.getScene() != null) {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/ajay/views/return.fxml"));
+            Parent root = loader.load();
+
+            Stage returnStage = new Stage();
+            returnStage.setTitle("Return Management");
+            returnStage.setScene(new Scene(root));
+            returnStage.initOwner(usernameLabel.getScene().getWindow());
+            returnStage.setWidth(900);
+            returnStage.setHeight(700);
+
+            Stage mainStage = (Stage) usernameLabel.getScene().getWindow();
+            returnStage.setX(mainStage.getX() + 50);
+            returnStage.setY(mainStage.getY() + 50);
+
+            openChildWindows.put("Return", returnStage);
+            returnStage.setOnHidden(e -> openChildWindows.remove("Return"));
+
+            returnStage.show();
+        }
+    } catch (IOException e) {
+        e.printStackTrace();
+        showAlert("Error", "Failed to open Return Management window");
+    }
+}
+
+
     private void showAlert(String title, String message) {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.ERROR);
