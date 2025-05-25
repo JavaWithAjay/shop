@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.*?>
-<?import javafx.scene.chart.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" 
             fx:controller="com.ajay.controllers.DashboardController">
     
     <top>
@@ -31,77 +30,33 @@
             <Button text="Udhar Khata (Credit Ledger)" 
                     style="-fx-background-color: transparent; -fx-text-fill: white; -fx-min-width: 180; -fx-alignment: CENTER_LEFT;" 
                     onAction="#showUdharKhata"/>
-            <Button text="Return Management" 
-        style="-fx-background-color: transparent; -fx-text-fill: white; -fx-min-width: 180; -fx-alignment: CENTER_LEFT;" 
-        onAction="#showReturnPage" />
-
+            <Button text="Returns" 
+                    style="-fx-background-color: transparent; -fx-text-fill: white; -fx-min-width: 180; -fx-alignment: CENTER_LEFT;" 
+                    onAction="#showReturnPage"/>
         </VBox>
     </left>
     
     <center>
-        <VBox spacing="15" style="-fx-padding: 15;">
-            
-            <!-- Charts Section -->
-            <GridPane hgap="15" vgap="15">
-                <columnConstraints>
-                    <ColumnConstraints percentWidth="50"/>
-                    <ColumnConstraints percentWidth="50"/>
-                </columnConstraints>
-                <rowConstraints>
-                    <RowConstraints percentHeight="50"/>
-                    <RowConstraints percentHeight="50"/>
-                </rowConstraints>
-                
-                <!-- Price Trends Chart -->
-                <VBox style="-fx-background-color: white; -fx-background-radius: 5; -fx-padding: 15; -fx-spacing: 5;" GridPane.columnIndex="0" GridPane.rowIndex="0">
-                    <Text text="Price Trends (Last 7 Days)" style="-fx-font-size: 16; -fx-font-weight: bold;"/>
-                    <BarChart fx:id="priceTrendChart" prefHeight="250">
-                        <xAxis>
-                            <CategoryAxis fx:id="priceDateAxis" />
-                        </xAxis>
-                        <yAxis>
-                            <NumberAxis fx:id="priceValueAxis" />
-                        </yAxis>
-                    </BarChart>
+        <VBox spacing="20" style="-fx-padding: 20;">
+            <!-- Simple Summary Cards -->
+            <HBox spacing="20" alignment="CENTER">
+                <VBox style="-fx-background-color: #ecf0f1; -fx-background-radius: 5; -fx-padding: 15; -fx-spacing: 5; -fx-min-width: 200;">
                 </VBox>
                 
-                <!-- Billing Analytics Chart -->
-                <VBox style="-fx-background-color: white; -fx-background-radius: 5; -fx-padding: 15; -fx-spacing: 5;" GridPane.columnIndex="1" GridPane.rowIndex="0">
-                    <Text text="Payment Method Distribution" style="-fx-font-size: 16; -fx-font-weight: bold;"/>
-                    <PieChart fx:id="billingPieChart" prefHeight="250" legendVisible="true" labelsVisible="true"/>
+                <VBox style="-fx-background-color: #ecf0f1; -fx-background-radius: 5; -fx-padding: 15; -fx-spacing: 5; -fx-min-width: 200;">
                 </VBox>
-                
-                <!-- Inventory Trends Chart -->
-                <VBox style="-fx-background-color: white; -fx-background-radius: 5; -fx-padding: 15; -fx-spacing: 5;" GridPane.columnIndex="0" GridPane.rowIndex="1">
-                    <Text text="Inventory Trends (Last 7 Days)" style="-fx-font-size: 16; -fx-font-weight: bold;"/>
-                    <LineChart fx:id="inventoryTrendChart" prefHeight="250">
-                        <xAxis>
-                            <CategoryAxis fx:id="inventoryDateAxis" />
-                        </xAxis>
-                        <yAxis>
-                            <NumberAxis fx:id="inventoryValueAxis" />
-                        </yAxis>
-                    </LineChart>
-                </VBox>
-                
-                <!-- Udhar Khata Table -->
-                <VBox style="-fx-background-color: white; -fx-background-radius: 5; -fx-padding: 15; -fx-spacing: 5;" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                    <Text text="Top 10 Udhar Khata Customers" style="-fx-font-size: 16; -fx-font-weight: bold;"/>
-                    <TableView fx:id="udharKhataTable" prefHeight="250">
-                        <columns>
-                            <TableColumn text="Customer Name" prefWidth="150"/>
-                            <TableColumn text="Phone" prefWidth="100"/>
-                            <TableColumn text="Credit Amount" prefWidth="120"/>
-                            <TableColumn text="Last Transaction" prefWidth="120"/>
-                        </columns>
-                    </TableView>
-                </VBox>
-            </GridPane>
-            
-            <HBox alignment="CENTER_RIGHT">
-                <Button fx:id="refreshButton" text="Refresh Data" 
-                        style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold; -fx-min-width: 150;"/>
             </HBox>
+            
+            <!-- Simple Udhar Khata Table -->
+            <VBox style="-fx-background-color: white; -fx-background-radius: 5; -fx-padding: 15; -fx-spacing: 5;">
+                <Label text="Top 10 Udhar Accounts" style="-fx-font-weight: bold;"/>
+                <TableView fx:id="udharKhataTable" prefHeight="300">
+                    <columns>
+                        <TableColumn text="Customer" prefWidth="200"/>
+                        <TableColumn text="Amount Due" prefWidth="100"/>
+                    </columns>
+                </TableView>
+            </VBox>
         </VBox>
     </center>
     
@@ -110,7 +65,7 @@
             <Label fx:id="statusLabel" text="Status: Connected"/>
             <Label fx:id="lastSyncLabel" text="Last Sync: Just now"/>
             <Region HBox.hgrow="ALWAYS"/>
-            <Label text="©2023 Grocery Shop Management System"/>
+            <Label text="©2023 Grocery Shop"/>
         </HBox>
     </bottom>
 </BorderPane>

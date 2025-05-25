@@ -48,7 +48,6 @@ public class UdharKhataController {
     @FXML private TextArea descArea;
     
     @FXML private Button addButton;
-    //@FXML private Button updateButton;
     @FXML private Button deleteButton;
     @FXML private Button clearButton;
     @FXML private Button refreshButton;
@@ -323,74 +322,6 @@ private void handleAddEntry(ActionEvent event) {
         closeConnection(conn);
     }
 }
-
-
-    // @FXML
-    // private void handleUpdateEntry(ActionEvent event) {
-    //     UdharKhataEntry selectedEntry = khataTable.getSelectionModel().getSelectedItem();
-    //     if (selectedEntry == null) {
-    //         showAlert(Alert.AlertType.WARNING, "No Selection", "Please select an entry to update");
-    //         return;
-    //     }
-
-    //     if (!validateForm()) return;
-        
-    //     Connection conn = null;
-    //     try {
-    //         conn = DatabaseConnection.getInstance().getConnection();
-    //         conn.setAutoCommit(false);
-            
-    //         String sql = "UPDATE udhar_khata SET customer_name = ?, phone = ?, product_name = ?, " +
-    //                     "amount = ?, paid_amount = ?, date = ?, description = ? WHERE id = ?";
-            
-    //         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-    //             stmt.setString(1, customerNameField.getText().trim());
-    //             stmt.setString(2, phoneField.getText().trim());
-    //             stmt.setString(3, productField.getText().trim());
-    //             stmt.setDouble(4, Double.parseDouble(amountField.getText()));
-    //             stmt.setDouble(5, Double.parseDouble(paidField.getText()));
-                
-    //             // Convert display date to DB format
-    //             LocalDate date = LocalDate.parse(dateField.getText().trim(), displayDateFormat);
-    //             stmt.setString(6, date.format(dbDateFormat));
-                
-    //             stmt.setString(7, descArea.getText().trim());
-    //             stmt.setInt(8, selectedEntry.getId());
-                
-    //             int affectedRows = stmt.executeUpdate();
-    //             if (affectedRows == 0) {
-    //                 throw new SQLException("Updating entry failed, no rows affected.");
-    //             }
-                
-    //             // Update the entry
-    //             selectedEntry.setCustomerName(customerNameField.getText().trim());
-    //             selectedEntry.setPhone(phoneField.getText().trim());
-    //             selectedEntry.setProductName(productField.getText().trim());
-    //             selectedEntry.setAmount(Double.parseDouble(amountField.getText()));
-    //             selectedEntry.setPaidAmount(Double.parseDouble(paidField.getText()));
-    //             selectedEntry.setDate(dateField.getText().trim());
-    //             selectedEntry.setDescription(descArea.getText().trim());
-                
-    //             khataTable.refresh();
-                
-    //             conn.commit();
-    //             clearFormFields();
-    //             showAlert(Alert.AlertType.INFORMATION, "Success", "Udhar entry updated successfully");
-    //         }
-    //     } catch (DateTimeParseException e) {
-    //         showAlert(Alert.AlertType.ERROR, "Date Error", "Please enter date in DD-MM-YYYY format");
-    //         rollbackTransaction(conn);
-    //     } catch (NumberFormatException e) {
-    //         showAlert(Alert.AlertType.ERROR, "Input Error", "Please enter valid numeric values");
-    //         rollbackTransaction(conn);
-    //     } catch (SQLException e) {
-    //         showAlert(Alert.AlertType.ERROR, "Database Error", "Failed to update entry: " + e.getMessage());
-    //         rollbackTransaction(conn);
-    //     } finally {
-    //         closeConnection(conn);
-    //     }
-    // }
-
     @FXML
     private void handleDeleteEntry(ActionEvent event) {
         UdharKhataEntry selectedEntry = khataTable.getSelectionModel().getSelectedItem();
